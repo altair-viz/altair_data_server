@@ -23,3 +23,11 @@ alt.data_transformers.enable('data_server')
 Now when you create an Altair chart, the data will be served in the background
 rather than embedded in the chart specification. Note that this means the
 chart will only render as long as the Python runtime is live.
+
+## Example
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/altair-viz/altair_data_server/blob/master/AltairDataServer.ipynb)
+
+You can see this in action, as well as read some of the motivation for this
+plugin, in the example notebook: [AltairDataServer.ipynb](AltairDataServer.ipynb).
+Click the "Open in Colab" link above to run a live version of the notebook.
