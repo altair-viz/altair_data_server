@@ -9,6 +9,23 @@ from altair_data_server._provide import _Provider
 
 class AltairDataServer(_Provider):
     """Backend server for Altair datasets."""
+    _instance = None
+
+    @classmethod
+    def getinstance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    @classmethod
+    def serve_data(cls, data, fmt='json'):
+        return cls.getinstance()._serve_data(data, fmt)
+
+    @classmethod
+    def reset(cls):
+        cls._instance.stop()
+        cls._instance = None
+
     def __init__(self):
         self._altair_resources = {}
         super(AltairDataServer, self).__init__()
@@ -25,7 +42,7 @@ class AltairDataServer(_Provider):
             raise ValueError("Unrecognized format: '{0}'".format(fmt))
         return content, _compute_data_hash(content)
 
-    def __call__(self, data, fmt='json'):
+    def _serve_data(self, data, fmt='json'):
         content, resource_id = self._serialize(data, fmt)
         if resource_id not in self._altair_resources:
             self._altair_resources[resource_id] = self.create(
@@ -36,5 +53,4 @@ class AltairDataServer(_Provider):
         return {'url': self._altair_resources[resource_id].url}
 
 
-# Singleton instance
-data_server = AltairDataServer()
+data_server = AltairDataServer.serve_data
