@@ -8,5 +8,5 @@ def test_entrypoint_exists():
 
 def test_entrypoint_identity():
     with alt.data_transformers.enable('data_server'):
-        entrypoint = alt.data_transformers.get()
-    assert entrypoint is data_server
+        transformer = alt.data_transformers.get()
+    assert transformer is data_server

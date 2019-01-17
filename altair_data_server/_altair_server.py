@@ -7,28 +7,18 @@ from __future__ import print_function
 from altair_data_server._provide import _Provider
 
 
-class AltairDataServer(_Provider):
+class AltairDataServer(object):
     """Backend server for Altair datasets."""
-    _instance = None
-
-    @classmethod
-    def getinstance(cls):
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
-
-    @classmethod
-    def serve_data(cls, data, fmt='json'):
-        return cls.getinstance()._serve_data(data, fmt)
-
-    @classmethod
-    def reset(cls):
-        cls._instance.stop()
-        cls._instance = None
-
     def __init__(self):
-        self._altair_resources = {}
-        super(AltairDataServer, self).__init__()
+        self._provider = None
+        # We need to keep references to served resources, because the background
+        # server uses weakrefs.
+        self._resources = {}
+
+    def reset(self):
+        if self._provider is not None:
+            self._provider.stop()
+        self._resources = {}
 
     @staticmethod
     def _serialize(data, fmt):
@@ -42,15 +32,18 @@ class AltairDataServer(_Provider):
             raise ValueError("Unrecognized format: '{0}'".format(fmt))
         return content, _compute_data_hash(content)
 
-    def _serve_data(self, data, fmt='json'):
+    def __call__(self, data, fmt='json'):
+        if self._provider is None:
+            self._provider = _Provider()
         content, resource_id = self._serialize(data, fmt)
-        if resource_id not in self._altair_resources:
-            self._altair_resources[resource_id] = self.create(
+        if resource_id not in self._resources:
+            self._resources[resource_id] = self._provider.create(
                 content=content,
                 extension=fmt,
                 headers={"Access-Control-Allow-Origin": "*"}
                 )
-        return {'url': self._altair_resources[resource_id].url}
+        return {'url': self._resources[resource_id].url}
 
 
-data_server = AltairDataServer.serve_data
+# Singleton instance
+data_server = AltairDataServer()

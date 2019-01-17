@@ -3,14 +3,13 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
-from altair_data_server import AltairDataServer, data_server
+from altair_data_server import data_server
 
 
 @pytest.fixture(scope="session")
 def session_context(request):
-    # if we don't reset the data server at the end of the session,
-    # pytest will never complete.
-    request.addfinalizer(lambda: AltairDataServer.reset())
+    # Reset the server at the end of the session.
+    request.addfinalizer(lambda: data_server.reset())
 
 
 @pytest.fixture
