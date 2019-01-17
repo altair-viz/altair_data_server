@@ -2,8 +2,9 @@
 
 [![build status](http://img.shields.io/travis/altair-viz/altair_data_server/master.svg?style=flat)](https://travis-ci.org/altair-viz/altair_data_server)
 
-This package is a lightweight data transformer extension for Altair
-that allows you to serve datasets from a background server.
+This is a data transformer plugin for [Altair](http://altair-viz.github.io)
+that provides data via a background WSGI server rather than embedding it in
+the notebook output.
 
 ## Usage
 
@@ -18,3 +19,7 @@ Next import altair and enable the data server:
 import altair as alt
 alt.data_transformers.enable('data_server')
 ```
+
+Now when you create an Altair chart, the data will be served in the background
+rather than embedded in the chart specification. Note that this means the
+chart will only render as long as the Python runtime is live.

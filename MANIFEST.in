@@ -1,0 +1,5 @@
+include *.md
+include Makefile
+include LICENSE
+include requirements.txt
+recursive-include altair_data_server *.py
