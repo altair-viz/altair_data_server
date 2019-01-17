@@ -10,7 +10,7 @@ that allows you to serve datasets from a background server.
 First install the package and its dependencies:
 
 ```
-pip install git+https://github.com/altair/altair_data_server
+pip install git+https://github.com/altair/altair_data_server.git
 ```
 
 Next import altair and enable the data server:
