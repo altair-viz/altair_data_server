@@ -21,12 +21,18 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import asyncio
+import six
 import socket
 import threading
 import wsgiref.simple_server
 
 import portpicker
+
+
+def _set_new_event_loop():
+    if not six.PY2:
+        import asyncio
+        asyncio.set_event_loop(asyncio.new_event_loop())
 
 
 def _build_server(started, stopped, stopping, timeout):
@@ -61,7 +67,7 @@ def _build_server(started, stopped, stopping, timeout):
                 wsgi_app,
                 server_class=_WSGIServerIPv6,
                 handler_class=SilentWSGIRequestHandler)
-        asyncio.set_event_loop(asyncio.new_event_loop())
+        _set_new_event_loop()
         started.set()
         httpd.timeout = timeout
         while not stopping.is_set():
