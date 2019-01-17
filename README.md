@@ -1,5 +1,7 @@
 # Altair data server
 
+[![build status](http://img.shields.io/travis/altair-viz/altair_data_server/master.svg?style=flat)](https://travis-ci.org/altair-viz/altair_data_server)
+
 This package is a lightweight data transformer extension for Altair
 that allows you to serve datasets from a background server.
 
