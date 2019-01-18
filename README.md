@@ -5,6 +5,9 @@
 This is a data transformer plugin for [Altair](http://altair-viz.github.io)
 that transparently serves data for Altair charts via a background WSGI server.
 
+**Altair data server is currently unreleased and still being tested... please
+let us know if you have any feedback!**
+
 ## Usage
 
 First install the package and its dependencies:
