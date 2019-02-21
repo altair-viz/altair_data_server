@@ -60,6 +60,8 @@ def find_packages(top=HERE):
 
 
 DESCRIPTION         = "A background data server for Altair charts."
+LONG_DESCRIPTION    = read("README.md")
+LONG_DESCRIPTION_CONTENT_TYPE = 'text/markdown'
 NAME                = "altair_data_server"
 PACKAGES            = find_packages()
 AUTHOR              = "Jake VanderPlas"
@@ -78,6 +80,8 @@ ENTRY_POINTS        = {
 setup(name=NAME,
       version=VERSION,
       description=DESCRIPTION,
+      long_description=LONG_DESCRIPTION,
+      long_description_content_type=LONG_DESCRIPTION_CONTENT_TYPE,
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       url=URL,
