@@ -1,6 +1,9 @@
 # Altair data server
 
 [![build status](http://img.shields.io/travis/altair-viz/altair_data_server/master.svg?style=flat)](https://travis-ci.org/altair-viz/altair_data_server)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/altair-viz/altair_data_server/master?filepath=AltairDataServer.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/altair-viz/altair_data_server/blob/master/AltairDataServer.ipynb)
+
 
 This is a data transformer plugin for [Altair](http://altair-viz.github.io)
 that transparently serves data for Altair charts via a background WSGI server.
