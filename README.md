@@ -1,7 +1,7 @@
 # Altair data server
 
 [![build status](http://img.shields.io/travis/altair-viz/altair_data_server/master.svg?style=flat)](https://travis-ci.org/altair-viz/altair_data_server)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/altair-viz/altair_data_server/master?filepath=AltairDataServer.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/altair-viz/altair_data_server/master?urlpath=lab/tree/AltairDataServer.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/altair-viz/altair_data_server/blob/master/AltairDataServer.ipynb)
 
 
@@ -21,7 +21,7 @@ let us know if you have any feedback!**
 First install the package and its dependencies:
 
 ```
-$ pip install git+https://github.com/altair-viz/altair_data_server.git
+$ pip install altair_data_server
 ```
 
 Next import altair and enable the data server:
