@@ -72,8 +72,14 @@ LICENSE             = 'BSD 3-clause'
 INSTALL_REQUIRES    = get_install_requirements("requirements.txt")
 VERSION             = version('altair_data_server/__init__.py')
 ENTRY_POINTS        = {
-    'altair.vegalite.v2.data_transformer': ['data_server=altair_data_server:data_server'],
-    'altair.vegalite.v3.data_transformer': ['data_server=altair_data_server:data_server']
+    'altair.vegalite.v2.data_transformer': [
+        'data_server=altair_data_server:data_server',
+        'data_server_proxied=altair_data_server:data_server_proxied',
+    ],
+    'altair.vegalite.v3.data_transformer': [
+        'data_server=altair_data_server:data_server',
+        'data_server_proxied=altair_data_server:data_server_proxied',
+    ],
 }
 
 
