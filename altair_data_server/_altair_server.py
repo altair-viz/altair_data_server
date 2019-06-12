@@ -4,6 +4,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from six.moves.urllib.parse import urlparse
+
 from altair_data_server._provide import _Provider
 
 
@@ -45,5 +47,17 @@ class AltairDataServer(object):
         return {'url': self._resources[resource_id].url}
 
 
-# Singleton instance
+class AltairDataServerProxied(AltairDataServer):
+    def __call__(self, data, fmt='json'):
+        result = super(AltairDataServerProxied, self).__call__(data, fmt)
+
+        url_parts = urlparse(result['url'])
+        # vega defaults to <base>/files, redirect it to <base>/proxy/<port>/<file>
+        result['url'] = '../proxy/{}{}'.format(url_parts.port, url_parts.path)
+
+        return result
+
+
+# Singleton instances
 data_server = AltairDataServer()
+data_server_proxied = AltairDataServerProxied()

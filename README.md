@@ -10,8 +10,8 @@ that transparently serves data for Altair charts via a background WSGI server.
 
 Note that charts will only render as long as your Python session is active.
 
-The data server is a good option when you'll be **working locally, 
-generating multiple charts as part of an exploration of data**.
+The data server is a good option when you'll be **generating multiple charts as
+part of an exploration of data**.
 
 ## Usage
 
@@ -22,20 +22,34 @@ $ pip install altair_data_server
 ```
 
 Next import altair and enable the data server:
+
 ```python
 import altair as alt
 alt.data_transformers.enable('data_server')
 ```
 Now when you create an Altair chart, the data will be served in the background
-rather than embedded in the chart specification. 
+rather than embedded in the chart specification.
 
-Once you are finished with exploration and want to generate charts that 
+Once you are finished with exploration and want to generate charts that
 will have their data fully embedded in the notebook, you can restore the
 default data transformer:
+
 ```python
 alt.data_transformers.enable('default')
 ```
+
 and carry on from there.
+
+## Remote Systems
+Remote systems (JupyterHub instances like Binder) usually do not allow the end
+user to access arbitrary ports. To enable users to work on that setup, make sure
+[jupyter-server-proxy](https://github.com/jupyterhub/jupyter-server-proxy) is
+installed on the jupyter server. In your notebook, use the following
+transformer:
+
+```python
+alt.data_transformers.enable('data_server_proxied')
+```
 
 ## Example
 
@@ -47,6 +61,6 @@ Click the "Open in Colab" link above to run a live version of the notebook.
 
 ## Known Issues
 
-Altair data server currently does not work on remote JupyterHub instances,
-including tools like Binder. More information at 
-https://github.com/altair-viz/altair_data_server/issues/3
+Because [jupyter-server-proxy](https://github.com/jupyterhub/jupyter-server-proxy)
+requires at least Python 3.5, the methods described in
+[Remote Systems](#remote-systems) do not work.
