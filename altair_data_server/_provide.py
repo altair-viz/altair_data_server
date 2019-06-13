@@ -131,7 +131,7 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
                     self.set_header('Content-Type', content_type)
                 resource.get(self)
 
-        app = tornado.wsgi.WSGIApplication([
+        app = tornado.web.Application([
             (r'.*', ResourceHandler),
         ])
 

@@ -1,3 +1,3 @@
 altair
 portpicker
-tornado<6.0
+tornado

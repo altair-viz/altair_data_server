@@ -24,68 +24,46 @@ from __future__ import print_function
 import six
 import socket
 import threading
-import wsgiref.simple_server
 
 import portpicker
+import tornado
 
 
-def _set_new_event_loop():
-    if not six.PY2:
-        import asyncio
-        asyncio.set_event_loop(asyncio.new_event_loop())
-
-
-def _build_server(started, stopped, stopping, timeout):
+def _build_server(started, stopped, ioloop, wsgi_app, port, timeout):
     """Closure to build the server function to be passed to the thread.
 
     Args:
         started: Threading event to notify when started.
-        stopped: Threading event to notify when stopped.
-        stopping: Threading event to notify when stopping.
+        ioloop: IOLoop
         timeout: Http timeout in seconds.
+        port: Port number to serve on.
+        wsgi_app: WSGI application to serve.
     Returns:
         A function that function that takes a port and WSGI app and notifies
         about its status via the threading events provided.
     """
+    address = ''  # Bind to all.
 
-    def server(port, wsgi_app):
-        """Serve a WSGI application until stopped.
+    # convert potential WSGI app
+    if isinstance(wsgi_app, tornado.web.Application):
+        app = wsgi_app
+    else:
+        app = tornado.wsgi.WSGIContainer(wsgi_app)
 
-        Args:
-        port: Port number to serve on.
-        wsgi_app: WSGI application to serve.
-        """
-        host = ''  # Bind to all.
-        try:
-            httpd = wsgiref.simple_server.make_server(
-                host, port, wsgi_app, handler_class=SilentWSGIRequestHandler)
-        except socket.error:
-            # Try IPv6
-            httpd = wsgiref.simple_server.make_server(
-                host,
-                port,
-                wsgi_app,
-                server_class=_WSGIServerIPv6,
-                handler_class=SilentWSGIRequestHandler)
-        _set_new_event_loop()
-        started.set()
-        httpd.timeout = timeout
-        while not stopping.is_set():
-            httpd.handle_request()
+    httpd = tornado.httpserver.HTTPServer(app, idle_connection_timeout=timeout, body_timeout=timeout)
+
+    def server():
+        """Serve a WSGI application until stopped."""
+        ioloop.make_current()
+
+        httpd.listen(port=port, address=address)
+        ioloop.add_callback(started.set)
+
+        ioloop.start()
+
         stopped.set()
 
-    return server
-
-
-class SilentWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
-    """WSGIRequestHandler that generates no logging output."""
-    def log_message(self, format, *args):  # pylint: disable=redefined-builtin
-        pass
-
-
-class _WSGIServerIPv6(wsgiref.simple_server.WSGIServer):
-    """IPv6 based extension of the simple WSGIServer."""
-    address_family = socket.AF_INET6
+    return httpd, server
 
 
 class _WsgiServer(object):
@@ -103,7 +81,8 @@ class _WsgiServer(object):
         # of the server running in the background thread.
         # These will be initialized after building the server.
         self._stopped = None
-        self._stopping = None
+        self._ioloop = None
+        self._server = None
 
     @property
     def wsgi_app(self):
@@ -127,9 +106,15 @@ class _WsgiServer(object):
         """Stops the server thread."""
         if self._server_thread is None:
             return
-        self._stopping.set()
         self._server_thread = None
+
+        def shutdown():
+            self._server.stop()
+            self._ioloop.stop()
+
+        self._ioloop.add_callback(shutdown)
         self._stopped.wait()
+        self._ioloop.close()
 
     def start(self, port=None, timeout=1):
         """Starts a server in a thread using the WSGI application provided.
@@ -144,17 +129,19 @@ class _WsgiServer(object):
         """
         if self._server_thread is not None:
             return
-        started = threading.Event()
-        self._stopped = threading.Event()
-        self._stopping = threading.Event()
 
-        wsgi_app = self.wsgi_app
-        server = _build_server(started, self._stopped, self._stopping, timeout)
         if port is None:
             self._port = portpicker.pick_unused_port()
         else:
             self._port = port
-        server_thread = threading.Thread(target=server, args=(self._port, wsgi_app))
+
+        started = threading.Event()
+        self._stopped = threading.Event()
+        self._ioloop = tornado.ioloop.IOLoop()
+
+        wsgi_app = self.wsgi_app
+        self._server, f = _build_server(started, self._stopped, self._ioloop, wsgi_app, self._port, timeout)
+        server_thread = threading.Thread(target=f)
         self._server_thread = server_thread
 
         server_thread.start()
