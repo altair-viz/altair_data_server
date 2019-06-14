@@ -1,0 +1,8 @@
+#!/bin/bash
+# This is the binder-specific post-build file and ensure that the notebook runs
+# nicely. See https://mybinder.readthedocs.io/en/latest/config_files.html for more details.
+
+set -euo pipefail
+
+# To reach the data server behind the binder firewall, we need to inject a proxy.
+pip install jupyter-server-proxy
