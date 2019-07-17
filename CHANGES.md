@@ -1,5 +1,7 @@
 # Altair Data ServerChange Log
 
+## Version 0.3.0 (unreleased)
+
 ## Version 0.2.0
 
 - Add `data_server_proxied` entrypoint for use with [jupyter-server-proxy](https://github.com/jupyterhub/jupyter-server-proxy) ([#5](https://github.com/altair-viz/altair_data_server/pull/5))
