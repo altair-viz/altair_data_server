@@ -41,11 +41,10 @@ alt.data_transformers.enable('default')
 and carry on from there.
 
 ## Remote Systems
-Remote systems (JupyterHub instances like Binder) usually do not allow the end
+Remotely-hosted notebooks (like JupyterHub or Binder) usually do not allow the end
 user to access arbitrary ports. To enable users to work on that setup, make sure
 [jupyter-server-proxy](https://github.com/jupyterhub/jupyter-server-proxy) is
-installed on the jupyter server. In your notebook, use the following
-transformer:
+installed on the jupyter server, and use the proxied data server transformer:
 
 ```python
 alt.data_transformers.enable('data_server_proxied')
@@ -53,14 +52,15 @@ alt.data_transformers.enable('data_server_proxied')
 
 ## Example
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/altair-viz/altair_data_server/master?urlpath=lab/tree/AltairDataServer.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/altair-viz/altair_data_server/blob/master/AltairDataServer.ipynb)
 
 You can see this in action, as well as read some of the motivation for this
 plugin, in the example notebook: [AltairDataServer.ipynb](AltairDataServer.ipynb).
-Click the "Open in Colab" link above to run a live version of the notebook.
+Click the Binder or Colab links above to try it out in your browser.
 
 ## Known Issues
 
 Because [jupyter-server-proxy](https://github.com/jupyterhub/jupyter-server-proxy)
 requires at least Python 3.5, the methods described in
-[Remote Systems](#remote-systems) do not work.
+[Remote Systems](#remote-systems) do not work do not work for older versions of Python.
