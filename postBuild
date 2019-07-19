@@ -6,3 +6,6 @@ set -euo pipefail
 
 # To reach the data server behind the binder firewall, we need to inject a proxy.
 pip install jupyter-server-proxy
+
+# Jupyterlab 1.0 or newer required for Altair 3.
+pip install jupyterlab>=1.0
