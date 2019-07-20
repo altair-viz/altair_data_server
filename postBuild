@@ -8,4 +8,4 @@ set -euo pipefail
 pip install jupyter-server-proxy
 
 # Jupyterlab 1.0 or newer required for Altair 3.
-pip install jupyterlab>=1.0
+pip install -U jupyterlab
