@@ -34,9 +34,9 @@ class _Resource(metaclass=abc.ABCMeta):
 
     def __init__(self, provider, headers, extension, route):
         if not isinstance(headers, collections.Mapping):
-            raise ValueError('headers must be a dict')
+            raise ValueError("headers must be a dict")
         if route and extension:
-            raise ValueError('Should only provide one of route or extension.')
+            raise ValueError("Should only provide one of route or extension.")
         self.headers = headers
         self._route = route
         if route:
@@ -44,7 +44,7 @@ class _Resource(metaclass=abc.ABCMeta):
         else:
             self._guid = str(uuid.uuid4())
             if extension:
-                self._guid += '.' + extension
+                self._guid += "." + extension
         self._provider = provider
 
     @abc.abstractmethod
@@ -65,11 +65,12 @@ class _Resource(metaclass=abc.ABCMeta):
     @property
     def url(self):
         """Url to fetch the resource at."""
-        return 'http://localhost:{}/{}'.format(self._provider.port, self._guid)
+        return "http://localhost:{}/{}".format(self._provider.port, self._guid)
 
 
 class _ContentResource(_Resource):
     """Content Resource"""
+
     def __init__(self, content, *args, **kwargs):
         self.content = content
         super(_ContentResource, self).__init__(*args, **kwargs)
@@ -81,6 +82,7 @@ class _ContentResource(_Resource):
 
 class _FileResource(_Resource):
     """File Resource"""
+
     def __init__(self, filepath, *args, **kwargs):
         self.filepath = filepath
         super(_FileResource, self).__init__(*args, **kwargs)
@@ -93,7 +95,6 @@ class _FileResource(_Resource):
 
 
 class _HandlerResource(_Resource):
-
     def __init__(self, func, *args, **kwargs):
         self.func = func
         super(_HandlerResource, self).__init__(*args, **kwargs)
@@ -114,30 +115,31 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
 
         class ResourceHandler(tornado.web.RequestHandler):
             """Serves the `_Resource` objects."""
+
             def get(self):
                 path = self.request.path
-                resource = resources.get(path.lstrip('/'))
+                resource = resources.get(path.lstrip("/"))
                 if not resource:
                     self.set_status(404)
                     return
                 content_type, _ = mimetypes.guess_type(path)
                 if content_type:
-                    self.set_header('Content-Type', content_type)
+                    self.set_header("Content-Type", content_type)
                 resource.get(self)
 
-        app = tornado.web.Application([
-            (r'.*', ResourceHandler),
-        ])
+        app = tornado.web.Application([(r".*", ResourceHandler),])
 
         super(_Provider, self).__init__(app)
 
-    def create(self,
-               content=None,
-               filepath=None,
-               handler=None,
-               headers=None,
-               extension=None,
-               route=None):
+    def create(
+        self,
+        content=None,
+        filepath=None,
+        handler=None,
+        headers=None,
+        extension=None,
+        route=None,
+    ):
         """Creates and provides a new resource to be served.
 
         Can only provide one of content, path, or handler.
@@ -157,13 +159,14 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
         sources = sum(map(bool, (content, filepath, handler)))
         if sources != 1:
             raise ValueError(
-                'Must provide exactly one of content, filepath, or handler')
+                "Must provide exactly one of content, filepath, or handler"
+            )
 
         if not headers:
             headers = {}
 
         if route:
-            route = route.lstrip('/')
+            route = route.lstrip("/")
 
         if content:
             resource = _ContentResource(
@@ -171,23 +174,26 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
                 headers=headers,
                 extension=extension,
                 provider=self,
-                route=route)
+                route=route,
+            )
         elif filepath:
             resource = _FileResource(
                 filepath,
                 headers=headers,
                 extension=extension,
                 provider=self,
-                route=route)
+                route=route,
+            )
         elif handler:
             resource = _HandlerResource(
                 handler,
                 headers=headers,
                 extension=extension,
                 provider=self,
-                route=route)
+                route=route,
+            )
         else:
-            raise ValueError('Must provide one of content, filepath, or handler.')
+            raise ValueError("Must provide one of content, filepath, or handler.")
 
         self._resources[resource.guid] = resource
         self.start()
