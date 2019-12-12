@@ -54,64 +54,44 @@ def find_packages(top=HERE):
     return packages
 
 
-# ==============================================================================
-# Variables
-# ==============================================================================
-
-
-DESCRIPTION = "A background data server for Altair charts."
-LONG_DESCRIPTION = read("README.md")
-LONG_DESCRIPTION_CONTENT_TYPE = "text/markdown"
-NAME = "altair_data_server"
-PACKAGES = find_packages()
-AUTHOR = "Jake VanderPlas"
-AUTHOR_EMAIL = "jakevdp@google.com"
-URL = "http://github.com/altair-viz/altair_data_server/"
-DOWNLOAD_URL = "http://github.com/altair-viz/altair_data_server/"
-LICENSE = "BSD 3-clause"
-INSTALL_REQUIRES = get_install_requirements("requirements.txt")
-PYTHON_REQUIRES = ">=3.5"
-VERSION = version("altair_data_server/__init__.py")
-ENTRY_POINTS = {
-    "altair.vegalite.v2.data_transformer": [
-        "data_server=altair_data_server:data_server",
-        "data_server_proxied=altair_data_server:data_server_proxied",
-    ],
-    "altair.vegalite.v3.data_transformer": [
-        "data_server=altair_data_server:data_server",
-        "data_server_proxied=altair_data_server:data_server_proxied",
-    ],
-    "altair.vegalite.v4.data_transformer": [
-        "data_server=altair_data_server:data_server",
-        "data_server_proxied=altair_data_server:data_server_proxied",
-    ],
-}
-
-
 setup(
-    name=NAME,
-    version=VERSION,
-    description=DESCRIPTION,
-    long_description=LONG_DESCRIPTION,
-    long_description_content_type=LONG_DESCRIPTION_CONTENT_TYPE,
-    author=AUTHOR,
-    author_email=AUTHOR_EMAIL,
-    url=URL,
-    download_url=DOWNLOAD_URL,
-    license=LICENSE,
-    packages=PACKAGES,
+    name="altair_data_server",
+    version=version("altair_data_server/__init__.py"),
+    description="A background data server for Altair charts.",
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
+    author="Jake VanderPlas",
+    author_email="jakevdp@google.com",
+    url="http://github.com/altair-viz/altair_data_server/",
+    download_url="http://github.com/altair-viz/altair_data_server/",
+    license="BSD 3-clause",
+    packages=find_packages(),
     include_package_data=True,
-    install_requires=INSTALL_REQUIRES,
-    entry_points=ENTRY_POINTS,
+    install_requires=get_install_requirements("requirements.txt"),
+    python_requires=">=3.5",
+    entry_points={
+        "altair.vegalite.v2.data_transformer": [
+            "data_server=altair_data_server:data_server",
+            "data_server_proxied=altair_data_server:data_server_proxied",
+        ],
+        "altair.vegalite.v3.data_transformer": [
+            "data_server=altair_data_server:data_server",
+            "data_server_proxied=altair_data_server:data_server_proxied",
+        ],
+        "altair.vegalite.v4.data_transformer": [
+            "data_server=altair_data_server:data_server",
+            "data_server_proxied=altair_data_server:data_server_proxied",
+        ],
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
 )
