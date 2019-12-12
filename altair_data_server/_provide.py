@@ -20,6 +20,7 @@
 import abc
 import collections
 import mimetypes
+from typing import Callable, Dict, Optional
 import uuid
 import weakref
 
@@ -32,7 +33,13 @@ from altair_data_server import _background_server
 class _Resource(metaclass=abc.ABCMeta):
     """Abstract resource class to handle content to colab."""
 
-    def __init__(self, provider, headers, extension, route):
+    def __init__(
+        self,
+        provider: "_Provider",
+        headers: dict,
+        extension: Optional[str],
+        route: Optional[str],
+    ):
         if not isinstance(headers, collections.Mapping):
             raise ValueError("headers must be a dict")
         if route and extension:
@@ -48,7 +55,7 @@ class _Resource(metaclass=abc.ABCMeta):
         self._provider = provider
 
     @abc.abstractmethod
-    def get(self, handler):
+    def get(self, handler: tornado.web.RequestHandler) -> None:
         """Gets the resource using the tornado handler passed in.
 
         Args:
@@ -58,12 +65,12 @@ class _Resource(metaclass=abc.ABCMeta):
             handler.set_header(key, value)
 
     @property
-    def guid(self):
+    def guid(self) -> str:
         """Unique id used to serve and reference the resource."""
         return self._guid
 
     @property
-    def url(self):
+    def url(self) -> str:
         """Url to fetch the resource at."""
         return "http://localhost:{}/{}".format(self._provider.port, self._guid)
 
@@ -71,11 +78,11 @@ class _Resource(metaclass=abc.ABCMeta):
 class _ContentResource(_Resource):
     """Content Resource"""
 
-    def __init__(self, content, *args, **kwargs):
+    def __init__(self, content: str, *args, **kwargs):
         self.content = content
         super(_ContentResource, self).__init__(*args, **kwargs)
 
-    def get(self, handler):
+    def get(self, handler: tornado.web.RequestHandler) -> None:
         super(_ContentResource, self).get(handler)
         handler.write(self.content)
 
@@ -83,11 +90,11 @@ class _ContentResource(_Resource):
 class _FileResource(_Resource):
     """File Resource"""
 
-    def __init__(self, filepath, *args, **kwargs):
+    def __init__(self, filepath: str, *args, **kwargs):
         self.filepath = filepath
         super(_FileResource, self).__init__(*args, **kwargs)
 
-    def get(self, handler):
+    def get(self, handler: tornado.web.RequestHandler) -> None:
         super(_FileResource, self).get(handler)
         with open(self.filepath) as f:
             data = f.read()
@@ -95,7 +102,7 @@ class _FileResource(_Resource):
 
 
 class _HandlerResource(_Resource):
-    def __init__(self, func, *args, **kwargs):
+    def __init__(self, func: Callable[[], str], *args, **kwargs):
         self.func = func
         super(_HandlerResource, self).__init__(*args, **kwargs)
 
@@ -110,7 +117,7 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
 
     def __init__(self):
         """Initialize the server with a ResourceHandler script."""
-        resources = weakref.WeakValueDictionary()
+        resources: Dict[str, _Resource] = weakref.WeakValueDictionary()
         self._resources = resources
 
         class ResourceHandler(tornado.web.RequestHandler):
@@ -133,13 +140,13 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
 
     def create(
         self,
-        content=None,
-        filepath=None,
-        handler=None,
-        headers=None,
-        extension=None,
-        route=None,
-    ):
+        content: str = "",
+        filepath: str = "",
+        handler: Optional[Callable[[], str]] = None,
+        headers: Optional[dict] = None,
+        extension: Optional[str] = None,
+        route: str = "",
+    ) -> _Resource:
         """Creates and provides a new resource to be served.
 
         Can only provide one of content, path, or handler.
@@ -162,8 +169,8 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
                 "Must provide exactly one of content, filepath, or handler"
             )
 
-        if not headers:
-            headers = {}
+        headers = headers or {}
+        resource: _Resource
 
         if route:
             route = route.lstrip("/")

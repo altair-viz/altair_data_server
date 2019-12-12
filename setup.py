@@ -68,7 +68,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=get_install_requirements("requirements.txt"),
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     entry_points={
         "altair.vegalite.v2.data_transformer": [
             "data_server=altair_data_server:data_server",
@@ -89,7 +89,6 @@ setup(
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
