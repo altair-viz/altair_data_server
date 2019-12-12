@@ -36,7 +36,7 @@ def _build_server(started, stopped, ioloop, wsgi_app, port, timeout):
         A function that function that takes a port and WSGI app and notifies
         about its status via the threading events provided.
     """
-    address = ''  # Bind to all.
+    address = ""  # Bind to all.
 
     # convert potential WSGI app
     if isinstance(wsgi_app, tornado.web.Application):
@@ -44,7 +44,9 @@ def _build_server(started, stopped, ioloop, wsgi_app, port, timeout):
     else:
         app = tornado.wsgi.WSGIContainer(wsgi_app)
 
-    httpd = tornado.httpserver.HTTPServer(app, idle_connection_timeout=timeout, body_timeout=timeout)
+    httpd = tornado.httpserver.HTTPServer(
+        app, idle_connection_timeout=timeout, body_timeout=timeout
+    )
 
     def server():
         """Serve a WSGI application until stopped."""
@@ -93,7 +95,7 @@ class _WsgiServer(object):
         The port being used by the server.
         """
         if self._server_thread is None:
-            raise RuntimeError('Server not running.')
+            raise RuntimeError("Server not running.")
         return self._port
 
     def stop(self):
@@ -134,7 +136,9 @@ class _WsgiServer(object):
         self._ioloop = tornado.ioloop.IOLoop()
 
         wsgi_app = self.wsgi_app
-        self._server, f = _build_server(started, self._stopped, self._ioloop, wsgi_app, self._port, timeout)
+        self._server, f = _build_server(
+            started, self._stopped, self._ioloop, wsgi_app, self._port, timeout
+        )
         server_thread = threading.Thread(target=f)
         self._server_thread = server_thread
 
