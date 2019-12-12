@@ -80,6 +80,10 @@ ENTRY_POINTS        = {
         'data_server=altair_data_server:data_server',
         'data_server_proxied=altair_data_server:data_server_proxied',
     ],
+    'altair.vegalite.v4.data_transformer': [
+        'data_server=altair_data_server:data_server',
+        'data_server_proxied=altair_data_server:data_server_proxied',
+    ],
 }
 
 
