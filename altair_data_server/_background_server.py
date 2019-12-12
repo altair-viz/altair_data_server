@@ -17,10 +17,6 @@
 # limitations under the License.
 """WSGI server utilities to run in thread. WSGI chosen for easier interop."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import threading
 
 import portpicker

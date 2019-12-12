@@ -1,10 +1,6 @@
 """Altair data server."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-from six.moves.urllib.parse import urlparse
+from urllib import parse
 
 from altair_data_server._provide import _Provider
 
@@ -51,7 +47,7 @@ class AltairDataServerProxied(AltairDataServer):
     def __call__(self, data, fmt='json'):
         result = super(AltairDataServerProxied, self).__call__(data, fmt)
 
-        url_parts = urlparse(result['url'])
+        url_parts = parse.urlparse(result['url'])
         # vega defaults to <base>/files, redirect it to <base>/proxy/<port>/<file>
         result['url'] = '../proxy/{}{}'.format(url_parts.port, url_parts.path)
 
