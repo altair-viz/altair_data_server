@@ -21,19 +21,30 @@ import threading
 
 import portpicker
 import tornado
+import tornado.web
+import tornado.ioloop
+import tornado.httpserver
+from typing import Callable, Optional, Tuple
 
 
-def _build_server(started, stopped, ioloop, wsgi_app, port, timeout):
+def _build_server(
+    started: threading.Event,
+    stopped: threading.Event,
+    ioloop: tornado.ioloop.IOLoop,
+    wsgi_app: tornado.web.Application,
+    port: int,
+    timeout: int,
+) -> Tuple[tornado.httpserver.HTTPServer, Callable]:
     """Closure to build the server function to be passed to the thread.
 
     Args:
         started: Threading event to notify when started.
         ioloop: IOLoop
-        timeout: Http timeout in seconds.
         port: Port number to serve on.
+        timeout: Http timeout in seconds.
         wsgi_app: WSGI application to serve.
     Returns:
-        A function that function that takes a port and WSGI app and notifies
+        A function that takes a port and WSGI app and notifies
         about its status via the threading events provided.
     """
     address = ""  # Bind to all.
@@ -65,28 +76,28 @@ def _build_server(started, stopped, ioloop, wsgi_app, port, timeout):
 class _WsgiServer(object):
     """Wsgi server."""
 
-    def __init__(self, wsgi_app):
+    def __init__(self, wsgi_app: tornado.web.Application):
         """Initialize the WsgiServer.
 
         Args:
         wsgi_app: WSGI pep-333 application to run.
         """
         self._app = wsgi_app
-        self._server_thread = None
+        self._server_thread: Optional[threading.Thread] = None
         # Threading.Event objects used to communicate about the status
         # of the server running in the background thread.
         # These will be initialized after building the server.
-        self._stopped = None
-        self._ioloop = None
-        self._server = None
+        self._stopped: Optional[threading.Event] = None
+        self._ioloop: Optional[tornado.ioloop.IOLoop] = None
+        self._server: Optional[tornado.httpserver.HTTPServer] = None
 
     @property
-    def wsgi_app(self):
+    def wsgi_app(self) -> tornado.web.Application:
         """Returns the wsgi app instance."""
         return self._app
 
     @property
-    def port(self):
+    def port(self) -> int:
         """Returns the current port or error if the server is not started.
 
         Raises:
@@ -112,7 +123,7 @@ class _WsgiServer(object):
         self._stopped.wait()
         self._ioloop.close()
 
-    def start(self, port=None, timeout=1):
+    def start(self, port: int = None, timeout: int = 1):
         """Starts a server in a thread using the WSGI application provided.
 
         Will wait until the thread has started calling with an already serving

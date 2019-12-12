@@ -6,6 +6,7 @@ install:
 test:
 	black .
 	python -m flake8 altair_data_server
+	python -m mypy altair_data_server
 	rm -r build
 	python setup.py build &&\
 	  cd build/lib &&\

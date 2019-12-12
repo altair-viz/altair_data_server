@@ -1,15 +1,22 @@
 """Altair data server."""
 
+from typing import Optional, Tuple
 from urllib import parse
 
 from altair_data_server._provide import _Provider
+from altair.utils.data import (
+    _data_to_json_string,
+    _data_to_csv_string,
+    _compute_data_hash,
+)
+import pandas as pd
 
 
 class AltairDataServer(object):
     """Backend server for Altair datasets."""
 
     def __init__(self):
-        self._provider = None
+        self._provider: Optional[_Provider] = None
         # We need to keep references to served resources, because the background
         # server uses weakrefs.
         self._resources = {}
@@ -20,14 +27,8 @@ class AltairDataServer(object):
         self._resources = {}
 
     @staticmethod
-    def _serialize(data, fmt):
+    def _serialize(data: pd.DataFrame, fmt: str) -> Tuple[str, str]:
         """Serialize data to the given format."""
-        from altair.utils.data import (
-            _data_to_json_string,
-            _data_to_csv_string,
-            _compute_data_hash,
-        )
-
         if fmt == "json":
             content = _data_to_json_string(data)
         elif fmt == "csv":
@@ -36,7 +37,7 @@ class AltairDataServer(object):
             raise ValueError("Unrecognized format: '{0}'".format(fmt))
         return content, _compute_data_hash(content)
 
-    def __call__(self, data, fmt="json"):
+    def __call__(self, data: pd.DataFrame, fmt: str = "json"):
         if self._provider is None:
             self._provider = _Provider()
         content, resource_id = self._serialize(data, fmt)
@@ -50,7 +51,7 @@ class AltairDataServer(object):
 
 
 class AltairDataServerProxied(AltairDataServer):
-    def __call__(self, data, fmt="json"):
+    def __call__(self, data: pd.DataFrame, fmt: str = "json"):
         result = super(AltairDataServerProxied, self).__call__(data, fmt)
 
         url_parts = parse.urlparse(result["url"])

@@ -4,7 +4,6 @@ cache: pip
 
 matrix:
   include:
-    - python: 3.5
     - python: 3.6
     - python: 3.7
     - python: 3.8
@@ -13,7 +12,8 @@ matrix:
       install:
       script:
         - black --check .
-        - flake8 vega_datasets
+        - flake8 altair_data_server
+        - mypy altair_data_server
 
 env:
   global:
