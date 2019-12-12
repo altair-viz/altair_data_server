@@ -70,6 +70,7 @@ URL                 = 'http://github.com/altair-viz/altair_data_server/'
 DOWNLOAD_URL        = 'http://github.com/altair-viz/altair_data_server/'
 LICENSE             = 'BSD 3-clause'
 INSTALL_REQUIRES    = get_install_requirements("requirements.txt")
+PYTHON_REQUIRES     = ">=3.5"
 VERSION             = version('altair_data_server/__init__.py')
 ENTRY_POINTS        = {
     'altair.vegalite.v2.data_transformer': [
