@@ -1,6 +1,8 @@
 # Altair Data ServerChange Log
 
-## Version 0.3.0 (unreleased)
+## Version 0.2.1
+
+- Add altair v4 entrypoint
 
 ## Version 0.2.0
 
