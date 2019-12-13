@@ -1,4 +1,11 @@
-# Altair Data ServerChange Log
+# Altair Data Server Change Log
+
+## Version 0.3.0
+
+- Add support for Python 3.8
+- Drop support for Python 3.5 and lower
+- Format code with [black](https://black.readthedocs.io/)
+- Add static type checking with [mypy](http://mypy-lang.org/)
 
 ## Version 0.2.1
 
