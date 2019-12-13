@@ -1,5 +1,7 @@
 # Altair Data Server Change Log
 
+## Version 0.4.0 (unreleased)
+
 ## Version 0.3.0
 
 - Add support for Python 3.8
