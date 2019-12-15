@@ -1,6 +1,8 @@
 # Altair data server
 
 [![build status](http://img.shields.io/travis/altair-viz/altair_data_server/master.svg?style=flat)](https://travis-ci.org/altair-viz/altair_data_server)
+[![github actions](https://github.com/altair-viz/altair_data_server/workflows/build/badge.svg)](https://github.com/altair-viz/altair_data_server/actions?query=workflow%3Abuild)
+[![github actions](https://github.com/altair-viz/altair_data_server/workflows/lint/badge.svg)](https://github.com/altair-viz/altair_data_server/actions?query=workflow%3Alint)
 [![code style black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/altair-viz/altair_data_server/master?urlpath=lab/tree/AltairDataServer.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/altair-viz/altair_data_server/blob/master/AltairDataServer.ipynb)
