@@ -40,7 +40,7 @@ class _Resource(metaclass=abc.ABCMeta):
         extension: Optional[str],
         route: Optional[str],
     ):
-        if not isinstance(headers, collections.Mapping):
+        if not isinstance(headers, collections.abc.Mapping):
             raise ValueError("headers must be a dict")
         if route and extension:
             raise ValueError("Should only provide one of route or extension.")
