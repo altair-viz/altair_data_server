@@ -19,6 +19,7 @@
 
 import abc
 import collections
+import hashlib
 import mimetypes
 from typing import Callable, Dict, Optional
 import uuid
@@ -30,15 +31,15 @@ import tornado.wsgi
 from altair_data_server import _background_server
 
 
-class _Resource(metaclass=abc.ABCMeta):
+class Resource(metaclass=abc.ABCMeta):
     """Abstract resource class to handle content to colab."""
 
     def __init__(
         self,
-        provider: "_Provider",
+        provider: "Provider",
         headers: dict,
-        extension: Optional[str],
-        route: Optional[str],
+        extension: Optional[str] = None,
+        route: Optional[str] = None,
     ):
         if not isinstance(headers, collections.abc.Mapping):
             raise ValueError("headers must be a dict")
@@ -75,24 +76,28 @@ class _Resource(metaclass=abc.ABCMeta):
         return "http://localhost:{}/{}".format(self._provider.port, self._guid)
 
 
-class _ContentResource(_Resource):
+class _ContentResource(Resource):
     """Content Resource"""
 
-    def __init__(self, content: str, *args, **kwargs):
+    def __init__(self, content: str, **kwargs):
         self.content = content
-        super(_ContentResource, self).__init__(*args, **kwargs)
+        if not kwargs.get("route"):
+            kwargs["route"] = hashlib.md5(self.content.encode()).hexdigest()
+        if kwargs.get("extension"):
+            kwargs["route"] += "." + kwargs.pop("extension")
+        super(_ContentResource, self).__init__(**kwargs)
 
     def get(self, handler: tornado.web.RequestHandler) -> None:
         super(_ContentResource, self).get(handler)
         handler.write(self.content)
 
 
-class _FileResource(_Resource):
+class _FileResource(Resource):
     """File Resource"""
 
-    def __init__(self, filepath: str, *args, **kwargs):
+    def __init__(self, filepath: str, **kwargs):
         self.filepath = filepath
-        super(_FileResource, self).__init__(*args, **kwargs)
+        super(_FileResource, self).__init__(**kwargs)
 
     def get(self, handler: tornado.web.RequestHandler) -> None:
         super(_FileResource, self).get(handler)
@@ -101,27 +106,27 @@ class _FileResource(_Resource):
         handler.write(data)
 
 
-class _HandlerResource(_Resource):
-    def __init__(self, func: Callable[[], str], *args, **kwargs):
+class _HandlerResource(Resource):
+    def __init__(self, func: Callable[[], str], **kwargs):
         self.func = func
-        super(_HandlerResource, self).__init__(*args, **kwargs)
+        super(_HandlerResource, self).__init__(**kwargs)
 
-    def get(self, handler):
+    def get(self, handler: tornado.web.RequestHandler) -> None:
         super(_HandlerResource, self).get(handler)
         content = self.func()
         handler.write(content)
 
 
-class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-access
+class Provider(_background_server._WsgiServer):  # pylint: disable=protected-access
     """Background server which can provide a set of resources."""
 
     def __init__(self):
         """Initialize the server with a ResourceHandler script."""
-        resources: Dict[str, _Resource] = weakref.WeakValueDictionary()
+        resources: Dict[str, Resource] = weakref.WeakValueDictionary()
         self._resources = resources
 
         class ResourceHandler(tornado.web.RequestHandler):
-            """Serves the `_Resource` objects."""
+            """Serves the `Resource` objects."""
 
             def get(self):
                 path = self.request.path
@@ -136,7 +141,7 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
 
         app = tornado.web.Application([(r".*", ResourceHandler),])
 
-        super(_Provider, self).__init__(app)
+        super(Provider, self).__init__(app)
 
     def create(
         self,
@@ -146,7 +151,7 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
         headers: Optional[dict] = None,
         extension: Optional[str] = None,
         route: str = "",
-    ) -> _Resource:
+    ) -> Resource:
         """Creates and provides a new resource to be served.
 
         Can only provide one of content, path, or handler.
@@ -159,7 +164,7 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
             extension: Optional extension to add to the url.
             route: Optional route to serve on.
         Returns:
-            The the `_Resource` object which will be served and will provide its url.
+            The the `Resource` object which will be served and will provide its url.
         Raises:
             ValueError: If you don't provide one of content, filepath, or handler.
         """
@@ -170,7 +175,7 @@ class _Provider(_background_server._WsgiServer):  # pylint: disable=protected-ac
             )
 
         headers = headers or {}
-        resource: _Resource
+        resource: Resource
 
         if route:
             route = route.lstrip("/")

@@ -3,7 +3,7 @@
 from typing import Optional, Tuple
 from urllib import parse
 
-from altair_data_server._provide import _Provider
+from altair_data_server._provide import Provider
 from altair.utils.data import (
     _data_to_json_string,
     _data_to_csv_string,
@@ -16,7 +16,7 @@ class AltairDataServer(object):
     """Backend server for Altair datasets."""
 
     def __init__(self):
-        self._provider: Optional[_Provider] = None
+        self._provider: Optional[Provider] = None
         # We need to keep references to served resources, because the background
         # server uses weakrefs.
         self._resources = {}
@@ -39,7 +39,7 @@ class AltairDataServer(object):
 
     def __call__(self, data: pd.DataFrame, fmt: str = "json"):
         if self._provider is None:
-            self._provider = _Provider()
+            self._provider = Provider()
         content, resource_id = self._serialize(data, fmt)
         if resource_id not in self._resources:
             self._resources[resource_id] = self._provider.create(
