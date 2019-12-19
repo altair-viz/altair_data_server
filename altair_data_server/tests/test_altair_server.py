@@ -9,8 +9,8 @@ from altair_data_server import data_server, data_server_proxied
 @pytest.fixture(scope="session")
 def session_context(request):
     # Reset the server at the end of the session.
-    request.addfinalizer(lambda: data_server.reset())
-    request.addfinalizer(lambda: data_server_proxied.reset())
+    request.addfinalizer(data_server.reset)
+    request.addfinalizer(data_server_proxied.reset)
 
 
 @pytest.fixture
