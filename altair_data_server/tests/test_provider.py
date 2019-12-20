@@ -1,9 +1,9 @@
 import tempfile
 
 import pytest
-from tornado.httpclient import HTTPClient
+from tornado.httpclient import HTTPClient, HTTPClientError
 
-from altair_data_server import Provider
+from altair_data_server import Provider, Resource
 
 
 @pytest.fixture
@@ -21,6 +21,7 @@ def provider():
 def test_content_resource(provider, http_client):
     content = "testing content resource"
     resource = provider.create(content=content, extension="txt")
+    assert isinstance(resource, Resource)
     assert resource.url.endswith("txt")
     assert http_client.fetch(resource.url).body.decode() == content
 
@@ -49,6 +50,7 @@ def test_handler_resource(provider, http_client):
             return f"Testing handler resource {self.count}\n"
 
     resource = provider.create(handler=Handler(), extension="txt")
+    assert isinstance(resource, Resource)
     for i in range(1, 3):
         assert (
             http_client.fetch(resource.url).body.decode()
@@ -63,4 +65,13 @@ def test_file_resource(provider, http_client):
         f.flush()
 
         resource = provider.create(filepath=f.name)
+        assert isinstance(resource, Resource)
         assert http_client.fetch(resource.url).body == content
+
+
+def test_expected_404(provider, http_client):
+    resource = provider.create(content="some new content")
+    url = resource.url + ".html"
+    with pytest.raises(HTTPClientError) as err:
+        http_client.fetch(url)
+    assert err.value.code == 404
