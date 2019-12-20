@@ -25,7 +25,7 @@
 
        twine upload dist/*
 
-7. update version to, e.g. 1.1.0dev
+7. update version to, e.g. 1.1.0.dev0
 
    - in altair_data_server/__init__.py
 
@@ -34,5 +34,5 @@
 9. Commit change and push to master
 
        git add . -u
-       git commit -m "MAINT: bump version to 1.1.0dev"
+       git commit -m "MAINT: bump version to 1.1.0.dev0"
        git push origin master
