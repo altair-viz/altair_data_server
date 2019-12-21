@@ -150,7 +150,7 @@ class _WsgiServer(object):
         self._server, f = _build_server(
             started, self._stopped, self._ioloop, wsgi_app, self._port, timeout
         )
-        server_thread = threading.Thread(target=f)
+        server_thread = threading.Thread(target=f, daemon=True)
         self._server_thread = server_thread
 
         server_thread.start()
