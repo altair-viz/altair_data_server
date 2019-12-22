@@ -117,6 +117,24 @@ class _HandlerResource(Resource):
         handler.write(content)
 
 
+class ResourceHandler(tornado.web.RequestHandler):
+    """Serves the `Resource` objects."""
+
+    def initialize(self, resources):
+        self.resources = resources
+
+    def get(self):
+        path = self.request.path
+        resource = self.resources.get(path.lstrip("/"))
+        if not resource:
+            self.set_status(404)
+            return
+        content_type, _ = mimetypes.guess_type(path)
+        if content_type:
+            self.set_header("Content-Type", content_type)
+        resource.get(self)
+
+
 class Provider(_background_server._WsgiServer):  # pylint: disable=protected-access
     """Background server which can provide a set of resources."""
 
@@ -125,21 +143,9 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
         resources: Dict[str, Resource] = weakref.WeakValueDictionary()
         self._resources = resources
 
-        class ResourceHandler(tornado.web.RequestHandler):
-            """Serves the `Resource` objects."""
-
-            def get(self):
-                path = self.request.path
-                resource = resources.get(path.lstrip("/"))
-                if not resource:
-                    self.set_status(404)
-                    return
-                content_type, _ = mimetypes.guess_type(path)
-                if content_type:
-                    self.set_header("Content-Type", content_type)
-                resource.get(self)
-
-        app = tornado.web.Application([(r".*", ResourceHandler),])
+        app = tornado.web.Application(
+            [(r".*", ResourceHandler, dict(resources=resources))]
+        )
 
         super(Provider, self).__init__(app)
 
