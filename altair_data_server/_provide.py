@@ -154,6 +154,7 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
         content: str = "",
         filepath: str = "",
         handler: Optional[Callable[[], str]] = None,
+        resource: Optional[Resource] = None,
         headers: Optional[dict] = None,
         extension: Optional[str] = None,
         route: str = "",
@@ -166,6 +167,7 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
             content: The string or byte content to return.
             filepath: The filepath to a file whose contents should be returned.
             handler: A function which will be executed and returned on each request.
+            resource: A custom resource instance.
             headers: A dict of header values to return.
             extension: Optional extension to add to the url.
             route: Optional route to serve on.
@@ -174,20 +176,20 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
         Raises:
             ValueError: If you don't provide one of content, filepath, or handler.
         """
-        sources = sum(map(bool, (content, filepath, handler)))
+        sources = sum(map(bool, (content, filepath, handler, resource)))
         if sources != 1:
             raise ValueError(
                 "Must provide exactly one of content, filepath, or handler"
             )
 
         headers = headers or {}
-        resource: Resource
+        resource_out: Resource
 
         if route:
             route = route.lstrip("/")
 
         if content:
-            resource = _ContentResource(
+            resource_out = _ContentResource(
                 content,
                 headers=headers,
                 extension=extension,
@@ -195,7 +197,7 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
                 route=route,
             )
         elif filepath:
-            resource = _FileResource(
+            resource_out = _FileResource(
                 filepath,
                 headers=headers,
                 extension=extension,
@@ -203,16 +205,18 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
                 route=route,
             )
         elif handler:
-            resource = _HandlerResource(
+            resource_out = _HandlerResource(
                 handler,
                 headers=headers,
                 extension=extension,
                 provider=self,
                 route=route,
             )
+        elif resource:
+            resource_out = resource
         else:
             raise ValueError("Must provide one of content, filepath, or handler.")
 
-        self._resources[resource.guid] = resource
+        self._resources[resource_out.guid] = resource_out
         self.start()
-        return resource
+        return resource_out
