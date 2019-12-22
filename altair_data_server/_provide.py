@@ -21,7 +21,7 @@ import abc
 import collections
 import hashlib
 import mimetypes
-from typing import Callable, Dict, Optional
+from typing import Callable, MutableMapping, Optional
 import uuid
 import weakref
 
@@ -73,7 +73,7 @@ class Resource(metaclass=abc.ABCMeta):
     @property
     def url(self) -> str:
         """Url to fetch the resource at."""
-        return "http://localhost:{}/{}".format(self._provider.port, self._guid)
+        return "{}/{}".format(self._provider.url, self._guid)
 
 
 class _ContentResource(Resource):
@@ -138,18 +138,20 @@ class ResourceHandler(tornado.web.RequestHandler):
 class Provider(_background_server._WsgiServer):  # pylint: disable=protected-access
     """Background server which can provide a set of resources."""
 
-    _resources: Dict[str, Resource]
+    _resources: MutableMapping[str, Resource]
 
     def __init__(self):
         """Initialize the server with a ResourceHandler script."""
         self._resources = weakref.WeakValueDictionary()
-
         app = tornado.web.Application(self._handlers())
-
         super(Provider, self).__init__(app)
 
     def _handlers(self):
         return [(r".*", ResourceHandler, dict(resources=self._resources))]
+
+    @property
+    def url(self):
+        return f"http://localhost:{self.port}"
 
     def create(
         self,

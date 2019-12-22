@@ -24,7 +24,7 @@ import tornado
 import tornado.web
 import tornado.ioloop
 import tornado.httpserver
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, TypeVar
 
 
 def _build_server(
@@ -73,7 +73,10 @@ def _build_server(
     return httpd, server
 
 
-class _WsgiServer(object):
+T = TypeVar("T", bound="_WsgiServer")
+
+
+class _WsgiServer:
     """Wsgi server."""
 
     def __init__(self, wsgi_app: tornado.web.Application):
@@ -109,11 +112,14 @@ class _WsgiServer(object):
             raise RuntimeError("Server not running.")
         return self._port
 
-    def stop(self):
+    def stop(self: T) -> T:
         """Stops the server thread."""
         if self._server_thread is None:
-            return
+            return self
         self._server_thread = None
+        assert self._ioloop is not None
+        assert self._server is not None
+        assert self._stopped is not None
 
         def shutdown():
             self._server.stop()
@@ -123,7 +129,9 @@ class _WsgiServer(object):
         self._stopped.wait()
         self._ioloop.close()
 
-    def start(self, port: int = None, timeout: int = 1):
+        return self
+
+    def start(self: T, port: int = None, timeout: int = 1) -> T:
         """Starts a server in a thread using the WSGI application provided.
 
         Will wait until the thread has started calling with an already serving
@@ -133,9 +141,13 @@ class _WsgiServer(object):
         port: Number of the port to use for the application, will find an open
             port if one is not provided.
         timeout: Http timeout in seconds.
+
+        Returns
+        -------
+        self
         """
         if self._server_thread is not None:
-            return
+            return self
 
         if port is None:
             self._port = portpicker.pick_unused_port()
@@ -155,3 +167,5 @@ class _WsgiServer(object):
 
         server_thread.start()
         started.wait()
+
+        return self
