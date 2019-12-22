@@ -7,6 +7,21 @@ import tornado.web
 from altair_data_server import Provider, Resource
 
 
+class RootHandler(tornado.web.RequestHandler):
+    content: bytes = b"root content"
+
+    def get(self):
+        self.write(self.content)
+
+
+class ProviderSubclass(Provider):
+    """Test class for Provider subclassing"""
+
+    def _handlers(self):
+        handlers = super()._handlers()
+        return [("/", RootHandler)] + handlers
+
+
 @pytest.fixture
 def http_client():
     return HTTPClient()
@@ -15,6 +30,13 @@ def http_client():
 @pytest.fixture(scope="module")
 def provider():
     provider = Provider()
+    yield provider
+    provider.stop()
+
+
+@pytest.fixture(scope="module")
+def provider_subclass():
+    provider = ProviderSubclass().start()
     yield provider
     provider.stop()
 
@@ -70,16 +92,10 @@ def test_file_resource(provider, http_client):
         assert http_client.fetch(resource.url).body == content
 
 
-def test_custom_resource(provider, http_client):
-    class CustomResource(Resource):
-        def get(self, handler: tornado.web.RequestHandler) -> None:
-            super().get(handler)
-            handler.write(b"custom content")
-
-    resource_in = CustomResource(provider=provider, headers={})
-    resource_out = provider.create(resource=resource_in)
-    assert resource_in is resource_out
-    assert http_client.fetch(resource_out.url).body == b"custom content"
+def test_provider_subclass(provider_subclass, http_client):
+    url = provider_subclass.url
+    content = http_client.fetch(url).body
+    assert content == RootHandler.content
 
 
 def test_expected_404(provider, http_client):

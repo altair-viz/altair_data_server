@@ -21,7 +21,7 @@ import abc
 import collections
 import hashlib
 import mimetypes
-from typing import Callable, Dict, Optional
+from typing import Callable, MutableMapping, Optional
 import uuid
 import weakref
 
@@ -73,7 +73,7 @@ class Resource(metaclass=abc.ABCMeta):
     @property
     def url(self) -> str:
         """Url to fetch the resource at."""
-        return "http://localhost:{}/{}".format(self._provider.port, self._guid)
+        return "{}/{}".format(self._provider.url, self._guid)
 
 
 class _ContentResource(Resource):
@@ -138,23 +138,26 @@ class ResourceHandler(tornado.web.RequestHandler):
 class Provider(_background_server._WsgiServer):  # pylint: disable=protected-access
     """Background server which can provide a set of resources."""
 
+    _resources: MutableMapping[str, Resource]
+
     def __init__(self):
         """Initialize the server with a ResourceHandler script."""
-        resources: Dict[str, Resource] = weakref.WeakValueDictionary()
-        self._resources = resources
-
-        app = tornado.web.Application(
-            [(r".*", ResourceHandler, dict(resources=resources))]
-        )
-
+        self._resources = weakref.WeakValueDictionary()
+        app = tornado.web.Application(self._handlers())
         super(Provider, self).__init__(app)
+
+    def _handlers(self):
+        return [(r".*", ResourceHandler, dict(resources=self._resources))]
+
+    @property
+    def url(self):
+        return f"http://localhost:{self.port}"
 
     def create(
         self,
         content: str = "",
         filepath: str = "",
         handler: Optional[Callable[[], str]] = None,
-        resource: Optional[Resource] = None,
         headers: Optional[dict] = None,
         extension: Optional[str] = None,
         route: str = "",
@@ -176,7 +179,7 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
         Raises:
             ValueError: If you don't provide one of content, filepath, or handler.
         """
-        sources = sum(map(bool, (content, filepath, handler, resource)))
+        sources = sum(map(bool, (content, filepath, handler)))
         if sources != 1:
             raise ValueError(
                 "Must provide exactly one of content, filepath, or handler"
@@ -212,8 +215,6 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
                 provider=self,
                 route=route,
             )
-        elif resource:
-            resource_out = resource
         else:
             raise ValueError("Must provide one of content, filepath, or handler.")
 
