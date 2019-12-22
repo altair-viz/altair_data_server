@@ -1,4 +1,5 @@
 import re
+from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
@@ -7,22 +8,22 @@ from altair_data_server import data_server, data_server_proxied
 
 
 @pytest.fixture(scope="session")
-def session_context(request):
+def session_context(request: Any) -> None:
     # Reset the server at the end of the session.
     request.addfinalizer(data_server.reset)
     request.addfinalizer(data_server_proxied.reset)
 
 
 @pytest.fixture
-def data():
+def data() -> pd.DataFrame:
     return pd.DataFrame({"x": np.arange(5), "y": list("ABCDE")})
 
 
-def _decode_normal_url(url, fmt):
+def _decode_normal_url(url: str, fmt: str) -> str:
     return url
 
 
-def _decode_proxied_url(url, fmt):
+def _decode_proxied_url(url: str, fmt: str) -> str:
     match = re.match(r"^\.\./proxy/([0-9]+)/([a-f0-9-]*\.([a-z]+))$", url)
     assert match
     assert match.group(3) == fmt
@@ -39,8 +40,13 @@ def _decode_proxied_url(url, fmt):
     [(data_server, _decode_normal_url), (data_server_proxied, _decode_proxied_url),],
 )
 def test_data_server(
-    data, session_context, fmt, parse_function, server_function, url_decoder
-):
+    data: pd.DataFrame,
+    session_context: Any,
+    fmt: str,
+    parse_function: Callable,
+    server_function: Callable,
+    url_decoder: Callable,
+) -> None:
     spec = server_function(data, fmt=fmt)
     assert isinstance(spec, dict)
     assert list(spec.keys()) == ["url"]

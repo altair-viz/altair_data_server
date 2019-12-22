@@ -59,7 +59,7 @@ def _build_server(
         app, idle_connection_timeout=timeout, body_timeout=timeout
     )
 
-    def server():
+    def server() -> None:
         """Serve a WSGI application until stopped."""
         ioloop.make_current()
 
@@ -79,41 +79,63 @@ T = TypeVar("T", bound="_WsgiServer")
 class _WsgiServer:
     """Wsgi server."""
 
-    def __init__(self, wsgi_app: tornado.web.Application):
+    _app: tornado.web.Application
+    _port: Optional[int]
+    _server_thread: Optional[threading.Thread]
+    _stopped: Optional[threading.Event]
+    _ioloop: Optional[tornado.ioloop.IOLoop]
+    _server: Optional[tornado.httpserver.HTTPServer]
+
+    def __init__(self: T, wsgi_app: tornado.web.Application) -> None:
         """Initialize the WsgiServer.
 
-        Args:
-        wsgi_app: WSGI pep-333 application to run.
+        Parameters
+        ----------
+        wsgi_app:
+            WSGI pep-333 application to run.
         """
         self._app = wsgi_app
-        self._server_thread: Optional[threading.Thread] = None
+        self._port = None
+        self._server_thread = None
         # Threading.Event objects used to communicate about the status
         # of the server running in the background thread.
         # These will be initialized after building the server.
-        self._stopped: Optional[threading.Event] = None
-        self._ioloop: Optional[tornado.ioloop.IOLoop] = None
-        self._server: Optional[tornado.httpserver.HTTPServer] = None
+        self._stopped = None
+        self._ioloop = None
+        self._server = None
 
     @property
-    def wsgi_app(self) -> tornado.web.Application:
+    def wsgi_app(self: T) -> tornado.web.Application:
         """Returns the wsgi app instance."""
         return self._app
 
     @property
-    def port(self) -> int:
+    def port(self: T) -> int:
         """Returns the current port or error if the server is not started.
 
-        Raises:
+        Returns
+        -------
+        port: int
+            The port being used by the server.
+
+        Raises
+        ------
         RuntimeError: If server has not been started yet.
-        Returns:
-        The port being used by the server.
         """
-        if self._server_thread is None:
+        if self._server_thread is None or self._port is None:
             raise RuntimeError("Server not running.")
         return self._port
 
     def stop(self: T) -> T:
-        """Stops the server thread."""
+        """Stops the server thread.
+
+        If server thread is already stopped, this is a no-op.
+        
+        Returns
+        -------
+        self :
+            Returns self for chaining.
+        """
         if self._server_thread is None:
             return self
         self._server_thread = None
@@ -121,9 +143,11 @@ class _WsgiServer:
         assert self._server is not None
         assert self._stopped is not None
 
-        def shutdown():
-            self._server.stop()
-            self._ioloop.stop()
+        def shutdown() -> None:
+            if self._server is not None:
+                self._server.stop()
+            if self._ioloop is not None:
+                self._ioloop.stop()
 
         self._ioloop.add_callback(shutdown)
         self._stopped.wait()
@@ -131,28 +155,32 @@ class _WsgiServer:
 
         return self
 
-    def start(self: T, port: int = None, timeout: int = 1) -> T:
+    def start(self: T, port: Optional[int] = None, timeout: int = 1) -> T:
         """Starts a server in a thread using the WSGI application provided.
 
         Will wait until the thread has started calling with an already serving
         application will simple return.
 
-        Args:
-        port: Number of the port to use for the application, will find an open
+        Parameters
+        ----------
+        port: int
+            Number of the port to use for the application, will find an open
             port if one is not provided.
-        timeout: Http timeout in seconds.
+        timeout: int
+            Http timeout in seconds. Default = 1.
 
         Returns
         -------
-        self
+        self :
+            Returns self for chaining.
         """
         if self._server_thread is not None:
             return self
 
-        if port is None:
+        self._port = port
+
+        if self._port is None:
             self._port = portpicker.pick_unused_port()
-        else:
-            self._port = port
 
         started = threading.Event()
         self._stopped = threading.Event()
