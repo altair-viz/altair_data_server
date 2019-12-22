@@ -2,7 +2,6 @@ import tempfile
 
 import pytest
 from tornado.httpclient import HTTPClient, HTTPClientError
-import tornado.web
 
 from altair_data_server import Provider, Resource
 
@@ -68,18 +67,6 @@ def test_file_resource(provider, http_client):
         resource = provider.create(filepath=f.name)
         assert isinstance(resource, Resource)
         assert http_client.fetch(resource.url).body == content
-
-
-def test_custom_resource(provider, http_client):
-    class CustomResource(Resource):
-        def get(self, handler: tornado.web.RequestHandler) -> None:
-            super().get(handler)
-            handler.write(b"custom content")
-
-    resource_in = CustomResource(provider=provider, headers={})
-    resource_out = provider.create(resource=resource_in)
-    assert resource_in is resource_out
-    assert http_client.fetch(resource_out.url).body == b"custom content"
 
 
 def test_expected_404(provider, http_client):
