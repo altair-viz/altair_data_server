@@ -21,7 +21,7 @@ import abc
 import collections
 import hashlib
 import mimetypes
-from typing import Callable, MutableMapping, Optional
+from typing import Callable, Dict, MutableMapping, Optional
 import uuid
 import weakref
 
@@ -107,6 +107,8 @@ class _FileResource(Resource):
 
 
 class _HandlerResource(Resource):
+    """Handler Resource"""
+
     def __init__(self, func: Callable[[], str], **kwargs):
         self.func = func
         super(_HandlerResource, self).__init__(**kwargs)
@@ -120,10 +122,10 @@ class _HandlerResource(Resource):
 class ResourceHandler(tornado.web.RequestHandler):
     """Serves the `Resource` objects."""
 
-    def initialize(self, resources):
+    def initialize(self, resources: Dict[str, Resource]) -> None:
         self.resources = resources
 
-    def get(self):
+    def get(self) -> None:
         path = self.request.path
         resource = self.resources.get(path.lstrip("/"))
         if not resource:
@@ -140,17 +142,17 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
 
     _resources: MutableMapping[str, Resource]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the server with a ResourceHandler script."""
         self._resources = weakref.WeakValueDictionary()
         app = tornado.web.Application(self._handlers())
         super(Provider, self).__init__(app)
 
-    def _handlers(self):
+    def _handlers(self) -> list:
         return [(r".*", ResourceHandler, dict(resources=self._resources))]
 
     @property
-    def url(self):
+    def url(self) -> str:
         return f"http://localhost:{self.port}"
 
     def create(
@@ -186,13 +188,13 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
             )
 
         headers = headers or {}
-        resource_out: Resource
+        resource: Resource
 
         if route:
             route = route.lstrip("/")
 
         if content:
-            resource_out = _ContentResource(
+            resource = _ContentResource(
                 content,
                 headers=headers,
                 extension=extension,
@@ -200,7 +202,7 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
                 route=route,
             )
         elif filepath:
-            resource_out = _FileResource(
+            resource = _FileResource(
                 filepath,
                 headers=headers,
                 extension=extension,
@@ -208,7 +210,7 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
                 route=route,
             )
         elif handler:
-            resource_out = _HandlerResource(
+            resource = _HandlerResource(
                 handler,
                 headers=headers,
                 extension=extension,
@@ -218,6 +220,6 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
         else:
             raise ValueError("Must provide one of content, filepath, or handler.")
 
-        self._resources[resource_out.guid] = resource_out
+        self._resources[resource.guid] = resource
         self.start()
-        return resource_out
+        return resource

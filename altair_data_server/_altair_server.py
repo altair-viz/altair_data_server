@@ -12,16 +12,16 @@ from altair.utils.data import (
 import pandas as pd
 
 
-class AltairDataServer(object):
+class AltairDataServer:
     """Backend server for Altair datasets."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._provider: Optional[Provider] = None
         # We need to keep references to served resources, because the background
         # server uses weakrefs.
-        self._resources = {}
+        self._resources: dict = {}
 
-    def reset(self):
+    def reset(self) -> None:
         if self._provider is not None:
             self._provider.stop()
         self._resources = {}
@@ -37,7 +37,7 @@ class AltairDataServer(object):
             raise ValueError("Unrecognized format: '{0}'".format(fmt))
         return content, _compute_data_hash(content)
 
-    def __call__(self, data: pd.DataFrame, fmt: str = "json"):
+    def __call__(self, data: pd.DataFrame, fmt: str = "json") -> dict:
         if self._provider is None:
             self._provider = Provider()
         content, resource_id = self._serialize(data, fmt)
@@ -51,7 +51,7 @@ class AltairDataServer(object):
 
 
 class AltairDataServerProxied(AltairDataServer):
-    def __call__(self, data: pd.DataFrame, fmt: str = "json"):
+    def __call__(self, data: pd.DataFrame, fmt: str = "json") -> dict:
         result = super(AltairDataServerProxied, self).__call__(data, fmt)
 
         url_parts = parse.urlparse(result["url"])
