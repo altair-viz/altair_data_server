@@ -1,6 +1,6 @@
 # Altair Data Server Change Log
 
-## Version 0.4.0 (unreleased)
+## Version 0.4.0
 
 - Make ``Provider`` and ``Resource`` top-level imports (#21).
 - Use a daemonic thread by default, so that server will automatically shut down
