@@ -1,8 +1,6 @@
-1. Update version to, e.g. 1.0.0
+1. Update version to, e.g. 1.0.0 in ``altair_data_server/__init__.py``
 
-   - in altair_data_server/__init__.py
-
-2. Make sure CHANGES.md is up to date for the release
+2. Make sure ``CHANGES.md`` is up to date for the release
 
 3. Commit change and push to master
 
@@ -25,9 +23,7 @@
 
        twine upload dist/*
 
-7. update version to, e.g. 1.1.0.dev0
-
-   - in altair_data_server/__init__.py
+7. update version to, e.g. 1.1.0.dev0 in ``altair_data_server/__init__.py``
 
 8. add a new changelog entry for the unreleased version
 
