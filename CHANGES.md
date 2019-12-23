@@ -2,6 +2,13 @@
 
 ## Version 0.4.0 (unreleased)
 
+- Make ``Provider`` and ``Resource`` top-level imports (#21).
+- Use a daemonic thread by default, so that server will automatically shut down
+  when the parent python process terminates (#24).
+- Facilitate subclassing of ``Provider`` class (#27).
+- Add ability to specify port when enabling altair data server (#28).
+- Many minor bug fixes and improvements to testing, type hints, and CI.
+
 ## Version 0.3.0
 
 - Add support for Python 3.8
