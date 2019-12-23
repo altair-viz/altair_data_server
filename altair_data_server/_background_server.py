@@ -34,7 +34,7 @@ def _build_server(
     wsgi_app: tornado.web.Application,
     port: int,
     timeout: int,
-) -> Tuple[tornado.httpserver.HTTPServer, Callable]:
+) -> Tuple[tornado.httpserver.HTTPServer, Callable[[], None]]:
     """Closure to build the server function to be passed to the thread.
 
     Args:

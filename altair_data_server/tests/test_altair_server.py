@@ -68,7 +68,7 @@ def test_data_server_port(
     fmt: str,
     server_function: Callable,
     url_decoder: Callable,
-):
+) -> None:
     port = portpicker.pick_unused_port()
     spec = server_function(data, port=port, fmt=fmt)
     url = url_decoder(spec["url"], fmt=fmt)

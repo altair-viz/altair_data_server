@@ -1,9 +1,9 @@
 """Altair data server."""
 
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 from urllib import parse
 
-from altair_data_server._provide import Provider
+from altair_data_server._provide import Provider, Resource
 from altair.utils.data import (
     _data_to_json_string,
     _data_to_csv_string,
@@ -19,7 +19,7 @@ class AltairDataServer:
         self._provider: Optional[Provider] = None
         # We need to keep references to served resources, because the background
         # server uses weakrefs.
-        self._resources: dict = {}
+        self._resources: Dict[str, Resource] = {}
 
     def reset(self) -> None:
         if self._provider is not None:
@@ -39,7 +39,7 @@ class AltairDataServer:
 
     def __call__(
         self, data: pd.DataFrame, fmt: str = "json", port: Optional[int] = None
-    ) -> dict:
+    ) -> Dict[str, str]:
         if self._provider is None:
             self._provider = Provider().start(port=port)
         if port is not None and port != self._provider.port:
@@ -57,8 +57,8 @@ class AltairDataServer:
 class AltairDataServerProxied(AltairDataServer):
     def __call__(
         self, data: pd.DataFrame, fmt: str = "json", port: Optional[int] = None
-    ) -> dict:
-        result = super(AltairDataServerProxied, self).__call__(data, fmt=fmt, port=port)
+    ) -> Dict[str, str]:
+        result = super().__call__(data, fmt=fmt, port=port)
 
         url_parts = parse.urlparse(result["url"])
         # vega defaults to <base>/files, redirect it to <base>/proxy/<port>/<file>

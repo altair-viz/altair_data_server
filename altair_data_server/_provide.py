@@ -37,7 +37,7 @@ class Resource(metaclass=abc.ABCMeta):
     def __init__(
         self,
         provider: "Provider",
-        headers: dict,
+        headers: Dict[str, str],
         extension: Optional[str] = None,
         route: Optional[str] = None,
     ):
@@ -85,10 +85,10 @@ class _ContentResource(Resource):
             kwargs["route"] = hashlib.md5(self.content.encode()).hexdigest()
         if kwargs.get("extension"):
             kwargs["route"] += "." + kwargs.pop("extension")
-        super(_ContentResource, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get(self, handler: tornado.web.RequestHandler) -> None:
-        super(_ContentResource, self).get(handler)
+        super().get(handler)
         handler.write(self.content)
 
 
@@ -97,10 +97,10 @@ class _FileResource(Resource):
 
     def __init__(self, filepath: str, **kwargs):
         self.filepath = filepath
-        super(_FileResource, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get(self, handler: tornado.web.RequestHandler) -> None:
-        super(_FileResource, self).get(handler)
+        super().get(handler)
         with open(self.filepath) as f:
             data = f.read()
         handler.write(data)
@@ -111,10 +111,10 @@ class _HandlerResource(Resource):
 
     def __init__(self, func: Callable[[], str], **kwargs):
         self.func = func
-        super(_HandlerResource, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get(self, handler: tornado.web.RequestHandler) -> None:
-        super(_HandlerResource, self).get(handler)
+        super().get(handler)
         content = self.func()
         handler.write(content)
 
@@ -146,7 +146,7 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
         """Initialize the server with a ResourceHandler script."""
         self._resources = weakref.WeakValueDictionary()
         app = tornado.web.Application(self._handlers())
-        super(Provider, self).__init__(app)
+        super().__init__(app)
 
     def _handlers(self) -> list:
         return [(r".*", ResourceHandler, dict(resources=self._resources))]
@@ -160,7 +160,7 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
         content: str = "",
         filepath: str = "",
         handler: Optional[Callable[[], str]] = None,
-        headers: Optional[dict] = None,
+        headers: Optional[Dict[str, str]] = None,
         extension: Optional[str] = None,
         route: str = "",
     ) -> Resource:
