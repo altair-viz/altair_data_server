@@ -1,3 +1,4 @@
+import portpicker
 import re
 from typing import Any, Callable
 
@@ -54,3 +55,21 @@ def test_data_server(
     url = url_decoder(spec["url"], fmt)
     served_data = parse_function(url)
     assert data.equals(served_data)
+
+
+@pytest.mark.parametrize(
+    "server_function,url_decoder",
+    [(data_server, _decode_normal_url), (data_server_proxied, _decode_proxied_url),],
+)
+@pytest.mark.parametrize("fmt", ["json", "csv"])
+def test_data_server_port(
+    data: pd.DataFrame,
+    session_context: Any,
+    fmt: str,
+    server_function: Callable,
+    url_decoder: Callable,
+):
+    port = portpicker.pick_unused_port()
+    spec = server_function(data, port=port, fmt=fmt)
+    url = url_decoder(spec["url"], fmt=fmt)
+    assert str(port) in url
