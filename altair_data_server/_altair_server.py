@@ -37,9 +37,13 @@ class AltairDataServer:
             raise ValueError("Unrecognized format: '{0}'".format(fmt))
         return content, _compute_data_hash(content)
 
-    def __call__(self, data: pd.DataFrame, fmt: str = "json") -> dict:
+    def __call__(
+        self, data: pd.DataFrame, fmt: str = "json", port: Optional[int] = None
+    ) -> dict:
         if self._provider is None:
-            self._provider = Provider()
+            self._provider = Provider().start(port=port)
+        if port is not None and port != self._provider.port:
+            self._provider.stop().start(port=port)
         content, resource_id = self._serialize(data, fmt)
         if resource_id not in self._resources:
             self._resources[resource_id] = self._provider.create(
@@ -51,8 +55,10 @@ class AltairDataServer:
 
 
 class AltairDataServerProxied(AltairDataServer):
-    def __call__(self, data: pd.DataFrame, fmt: str = "json") -> dict:
-        result = super(AltairDataServerProxied, self).__call__(data, fmt)
+    def __call__(
+        self, data: pd.DataFrame, fmt: str = "json", port: Optional[int] = None
+    ) -> dict:
+        result = super(AltairDataServerProxied, self).__call__(data, fmt=fmt, port=port)
 
         url_parts = parse.urlparse(result["url"])
         # vega defaults to <base>/files, redirect it to <base>/proxy/<port>/<file>
