@@ -1,5 +1,7 @@
 # Altair Data Server Change Log
 
+## Version 0.5.0 (unreleased)
+
 ## Version 0.4.0
 
 - Make ``Provider`` and ``Resource`` top-level imports (#21).
