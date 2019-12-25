@@ -138,7 +138,6 @@ class _WsgiServer:
         """
         if self._server_thread is None:
             return self
-        self._server_thread = None
         assert self._ioloop is not None
         assert self._server is not None
         assert self._stopped is not None
@@ -152,6 +151,11 @@ class _WsgiServer:
         self._ioloop.add_callback(shutdown)
         self._stopped.wait()
         self._ioloop.close()
+
+        self._server_thread = None
+        self._ioloop = None
+        self._server = None
+        self._stopped = None
 
         return self
 
