@@ -130,7 +130,7 @@ class _WsgiServer:
         """Stops the server thread.
 
         If server thread is already stopped, this is a no-op.
-        
+
         Returns
         -------
         self :

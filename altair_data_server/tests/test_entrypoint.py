@@ -13,7 +13,7 @@ def test_entrypoint_exists() -> None:
 
 @pytest.mark.parametrize(
     "name,server_function",
-    [("data_server", data_server), ("data_server_proxied", data_server_proxied),],
+    [("data_server", data_server), ("data_server_proxied", data_server_proxied)],
 )
 def test_entrypoint_identity(name: str, server_function: Callable) -> None:
     with alt.data_transformers.enable(name):

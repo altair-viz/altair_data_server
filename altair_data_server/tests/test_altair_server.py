@@ -34,11 +34,11 @@ def _decode_proxied_url(url: str, fmt: str) -> str:
 
 
 @pytest.mark.parametrize(
-    "fmt,parse_function", [("json", pd.read_json), ("csv", pd.read_csv),]
+    "fmt,parse_function", [("json", pd.read_json), ("csv", pd.read_csv)]
 )
 @pytest.mark.parametrize(
     "server_function,url_decoder",
-    [(data_server, _decode_normal_url), (data_server_proxied, _decode_proxied_url),],
+    [(data_server, _decode_normal_url), (data_server_proxied, _decode_proxied_url)],
 )
 def test_data_server(
     data: pd.DataFrame,
@@ -59,7 +59,7 @@ def test_data_server(
 
 @pytest.mark.parametrize(
     "server_function,url_decoder",
-    [(data_server, _decode_normal_url), (data_server_proxied, _decode_proxied_url),],
+    [(data_server, _decode_normal_url), (data_server_proxied, _decode_proxied_url)],
 )
 @pytest.mark.parametrize("fmt", ["json", "csv"])
 def test_data_server_port(
