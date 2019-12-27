@@ -43,16 +43,15 @@ class Resource(metaclass=abc.ABCMeta):
     ):
         if not isinstance(headers, collections.abc.Mapping):
             raise ValueError("headers must be a dict")
-        if route and extension:
+        if route is not None and extension is not None:
             raise ValueError("Should only provide one of route or extension.")
         self.headers = headers
         self._route = route
-        if route:
-            self._guid = route
-        else:
-            self._guid = str(uuid.uuid4())
+        if route is None:
+            route = str(uuid.uuid4())
             if extension:
-                self._guid += "." + extension
+                route += "." + extension
+        self._guid = route
         self._provider = provider
 
     @abc.abstractmethod
@@ -79,13 +78,23 @@ class Resource(metaclass=abc.ABCMeta):
 class _ContentResource(Resource):
     """Content Resource"""
 
-    def __init__(self, content: str, **kwargs):
+    def __init__(
+        self,
+        content: str,
+        provider: "Provider",
+        headers: Dict[str, str],
+        extension: Optional[str] = None,
+        route: Optional[str] = None,
+    ):
         self.content = content
-        if not kwargs.get("route"):
-            kwargs["route"] = hashlib.md5(self.content.encode()).hexdigest()
-        if kwargs.get("extension"):
-            kwargs["route"] += "." + kwargs.pop("extension")
-        super().__init__(**kwargs)
+        if route is None:
+            route = hashlib.md5(self.content.encode()).hexdigest()
+            if extension is not None:
+                route += "." + extension
+                extension = None
+        super().__init__(
+            provider=provider, headers=headers, extension=extension, route=route
+        )
 
     def get(self, handler: tornado.web.RequestHandler) -> None:
         super().get(handler)
@@ -95,9 +104,18 @@ class _ContentResource(Resource):
 class _FileResource(Resource):
     """File Resource"""
 
-    def __init__(self, filepath: str, **kwargs):
+    def __init__(
+        self,
+        filepath: str,
+        provider: "Provider",
+        headers: Dict[str, str],
+        extension: Optional[str] = None,
+        route: Optional[str] = None,
+    ):
         self.filepath = filepath
-        super().__init__(**kwargs)
+        super().__init__(
+            provider=provider, headers=headers, extension=extension, route=route
+        )
 
     def get(self, handler: tornado.web.RequestHandler) -> None:
         super().get(handler)
@@ -109,9 +127,18 @@ class _FileResource(Resource):
 class _HandlerResource(Resource):
     """Handler Resource"""
 
-    def __init__(self, func: Callable[[], str], **kwargs):
+    def __init__(
+        self,
+        func: Callable[[], str],
+        provider: "Provider",
+        headers: Dict[str, str],
+        extension: Optional[str] = None,
+        route: Optional[str] = None,
+    ):
         self.func = func
-        super().__init__(**kwargs)
+        super().__init__(
+            provider=provider, headers=headers, extension=extension, route=route
+        )
 
     def get(self, handler: tornado.web.RequestHandler) -> None:
         super().get(handler)
@@ -162,7 +189,7 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
         handler: Optional[Callable[[], str]] = None,
         headers: Optional[Dict[str, str]] = None,
         extension: Optional[str] = None,
-        route: str = "",
+        route: Optional[str] = None,
     ) -> Resource:
         """Creates and provides a new resource to be served.
 
@@ -189,9 +216,6 @@ class Provider(_background_server._WsgiServer):  # pylint: disable=protected-acc
 
         headers = headers or {}
         resource: Resource
-
-        if route:
-            route = route.lstrip("/")
 
         if content:
             resource = _ContentResource(

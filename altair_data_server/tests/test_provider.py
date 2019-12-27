@@ -54,13 +54,17 @@ def test_content_default_url(provider: Provider) -> None:
     content = "testing default url"
     resource1 = provider.create(content=content, extension="txt")
     resource2 = provider.create(content=content, extension="txt")
+    path = resource1.url.split("/")[-1]
+    assert path.endswith(".txt")
+    assert len(path) > 4
     assert resource1.url == resource2.url
 
 
-def test_content_route(provider: Provider, http_client: HTTPClient) -> None:
-    content = "testing route"
-    resource = provider.create(content=content, route="hello_world.txt")
-    assert resource.url.split("/")[-1] == "hello_world.txt"
+@pytest.mark.parametrize("route", ["hello_world.txt", ""])
+def test_content_route(provider: Provider, http_client: HTTPClient, route: str) -> None:
+    content = "testing route {!r}".format(route)
+    resource = provider.create(content=content, route=route)
+    assert resource.url.split("/")[-1] == route
     assert http_client.fetch(resource.url).body == content.encode()
 
 
