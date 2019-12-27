@@ -46,12 +46,11 @@ class Resource(metaclass=abc.ABCMeta):
         if route is not None and extension is not None:
             raise ValueError("Should only provide one of route or extension.")
         self.headers = headers
-        self._route = route
         if route is None:
             route = str(uuid.uuid4())
             if extension:
                 route += "." + extension
-        self._guid = route
+        self._guid = route.lstrip("/")
         self._provider = provider
 
     @abc.abstractmethod
