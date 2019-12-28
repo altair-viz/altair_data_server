@@ -1,5 +1,7 @@
 # Altair Data Server Change Log
 
+## Version 0.5.0 (unreleased)
+
 ## Version 0.4.1
 
 - Allow content to be served from root URL

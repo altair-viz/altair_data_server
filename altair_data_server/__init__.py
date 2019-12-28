@@ -1,5 +1,5 @@
 """Altair data server"""
-__version__ = "0.4.1"
+__version__ = "0.5.0.dev0"
 __all__ = [
     "AltairDataServer",
     "data_server",
