@@ -59,7 +59,7 @@ def _build_server(
         app, idle_connection_timeout=timeout, body_timeout=timeout
     )
 
-    def server() -> None:
+    def start_server() -> None:
         """Serve a WSGI application until stopped."""
         ioloop.make_current()
 
@@ -70,7 +70,7 @@ def _build_server(
 
         stopped.set()
 
-    return httpd, server
+    return httpd, start_server
 
 
 T = TypeVar("T", bound="_WsgiServer")
@@ -159,11 +159,12 @@ class _WsgiServer:
 
         return self
 
-    def start(self: T, port: Optional[int] = None, timeout: int = 1) -> T:
-        """Starts a server in a thread using the WSGI application provided.
+    def start(
+        self: T, port: Optional[int] = None, timeout: int = 1, daemon: bool = True
+    ) -> T:
+        """Starts a server in a thread using the provided WSGI application.
 
-        Will wait until the thread has started calling with an already serving
-        application will simple return.
+        Will wait until the thread has started to return.
 
         Parameters
         ----------
@@ -171,7 +172,10 @@ class _WsgiServer:
             Number of the port to use for the application, will find an open
             port if one is not provided.
         timeout: int
-            Http timeout in seconds. Default = 1.
+            HTTP timeout in seconds. Default = 1.
+        daemon: bool
+            If True (default) use a daemon thread that will automatically terminate when
+            the main process terminates.
 
         Returns
         -------
@@ -191,13 +195,12 @@ class _WsgiServer:
         self._ioloop = tornado.ioloop.IOLoop()
 
         wsgi_app = self.wsgi_app
-        self._server, f = _build_server(
+        self._server, start_server = _build_server(
             started, self._stopped, self._ioloop, wsgi_app, self._port, timeout
         )
-        server_thread = threading.Thread(target=f, daemon=True)
-        self._server_thread = server_thread
+        self._server_thread = threading.Thread(target=start_server, daemon=daemon)
 
-        server_thread.start()
+        self._server_thread.start()
         started.wait()
 
         return self
