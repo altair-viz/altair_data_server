@@ -34,7 +34,7 @@ class AltairDataServer:
         elif fmt == "csv":
             content = _data_to_csv_string(data)
         else:
-            raise ValueError("Unrecognized format: '{0}'".format(fmt))
+            raise ValueError(f"Unrecognized format: {fmt!r}")
         return content, _compute_data_hash(content)
 
     def __call__(
@@ -62,7 +62,7 @@ class AltairDataServerProxied(AltairDataServer):
 
         url_parts = parse.urlparse(result["url"])
         # vega defaults to <base>/files, redirect it to <base>/proxy/<port>/<file>
-        result["url"] = "../proxy/{}{}".format(url_parts.port, url_parts.path)
+        result["url"] = f"../proxy/{url_parts.port}{url_parts.path}"
 
         return result
 

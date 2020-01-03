@@ -31,7 +31,7 @@ def _build_server(
     started: threading.Event,
     stopped: threading.Event,
     ioloop: tornado.ioloop.IOLoop,
-    wsgi_app: tornado.web.Application,
+    app: tornado.web.Application,
     port: int,
     timeout: int,
 ) -> Tuple[tornado.httpserver.HTTPServer, Callable[[], None]]:
@@ -42,71 +42,42 @@ def _build_server(
         ioloop: IOLoop
         port: Port number to serve on.
         timeout: Http timeout in seconds.
-        wsgi_app: WSGI application to serve.
+        app: tornado application to serve.
     Returns:
         A function that takes a port and WSGI app and notifies
         about its status via the threading events provided.
     """
-    address = ""  # Bind to all.
-
-    # convert potential WSGI app
-    if isinstance(wsgi_app, tornado.web.Application):
-        app = wsgi_app
-    else:
-        app = tornado.wsgi.WSGIContainer(wsgi_app)
-
-    httpd = tornado.httpserver.HTTPServer(
-        app, idle_connection_timeout=timeout, body_timeout=timeout
-    )
-
-    def start_server() -> None:
-        """Serve a WSGI application until stopped."""
-        ioloop.make_current()
-
-        httpd.listen(port=port, address=address)
-        ioloop.add_callback(started.set)
-
-        ioloop.start()
-
-        stopped.set()
-
-    return httpd, start_server
 
 
-T = TypeVar("T", bound="_WsgiServer")
+T = TypeVar("T", bound="_BackgroundServer")
 
 
-class _WsgiServer:
-    """Wsgi server."""
+class _BackgroundServer:
+    """Tornado server running in a background thread."""
 
     _app: tornado.web.Application
     _port: Optional[int]
     _server_thread: Optional[threading.Thread]
-    _stopped: Optional[threading.Event]
     _ioloop: Optional[tornado.ioloop.IOLoop]
     _server: Optional[tornado.httpserver.HTTPServer]
 
-    def __init__(self: T, wsgi_app: tornado.web.Application) -> None:
-        """Initialize the WsgiServer.
+    def __init__(self: T, app: tornado.web.Application) -> None:
+        """Initialize the BackgroundServer.
 
         Parameters
         ----------
-        wsgi_app:
-            WSGI pep-333 application to run.
+        app: tornado.web.Application
+            application to run in the background thread.
         """
-        self._app = wsgi_app
+        self._app = app
         self._port = None
         self._server_thread = None
-        # Threading.Event objects used to communicate about the status
-        # of the server running in the background thread.
-        # These will be initialized after building the server.
-        self._stopped = None
         self._ioloop = None
         self._server = None
 
     @property
-    def wsgi_app(self: T) -> tornado.web.Application:
-        """Returns the wsgi app instance."""
+    def app(self: T) -> tornado.web.Application:
+        """Returns the app instance."""
         return self._app
 
     @property
@@ -140,7 +111,6 @@ class _WsgiServer:
             return self
         assert self._ioloop is not None
         assert self._server is not None
-        assert self._stopped is not None
 
         def shutdown() -> None:
             if self._server is not None:
@@ -148,14 +118,14 @@ class _WsgiServer:
             if self._ioloop is not None:
                 self._ioloop.stop()
 
-        self._ioloop.add_callback(shutdown)
-        self._stopped.wait()
-        self._ioloop.close()
-
-        self._server_thread = None
-        self._ioloop = None
-        self._server = None
-        self._stopped = None
+        try:
+            self._ioloop.add_callback(shutdown)
+            self._server_thread.join()
+            self._ioloop.close(all_fds=True)
+        finally:
+            self._server_thread = None
+            self._ioloop = None
+            self._server = None
 
         return self
 
@@ -190,16 +160,28 @@ class _WsgiServer:
         if self._port is None:
             self._port = portpicker.pick_unused_port()
 
-        started = threading.Event()
-        self._stopped = threading.Event()
         self._ioloop = tornado.ioloop.IOLoop()
-
-        wsgi_app = self.wsgi_app
-        self._server, start_server = _build_server(
-            started, self._stopped, self._ioloop, wsgi_app, self._port, timeout
+        self._server = tornado.httpserver.HTTPServer(
+            self._app, idle_connection_timeout=timeout, body_timeout=timeout
         )
-        self._server_thread = threading.Thread(target=start_server, daemon=daemon)
 
+        def start_server(
+            ioloop: tornado.ioloop.IOLoop,
+            httpd: tornado.httpserver.HTTPServer,
+            port: int,
+        ) -> None:
+            ioloop.make_current()
+            httpd.listen(port=port)
+            ioloop.start()
+
+        self._server_thread = threading.Thread(
+            target=start_server,
+            daemon=daemon,
+            kwargs={"ioloop": self._ioloop, "httpd": self._server, "port": self._port},
+        )
+
+        started = threading.Event()
+        self._ioloop.add_callback(started.set)
         self._server_thread.start()
         started.wait()
 

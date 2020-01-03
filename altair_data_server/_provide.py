@@ -28,7 +28,7 @@ import weakref
 import tornado.web
 import tornado.wsgi
 
-from altair_data_server import _background_server
+from altair_data_server._background_server import _BackgroundServer
 
 
 class Resource(metaclass=abc.ABCMeta):
@@ -71,7 +71,7 @@ class Resource(metaclass=abc.ABCMeta):
     @property
     def url(self) -> str:
         """Url to fetch the resource at."""
-        return "{}/{}".format(self._provider.url, self._guid)
+        return f"{self._provider.url}/{self._guid}"
 
 
 class _ContentResource(Resource):
@@ -163,7 +163,7 @@ class ResourceHandler(tornado.web.RequestHandler):
         resource.get(self)
 
 
-class Provider(_background_server._WsgiServer):  # pylint: disable=protected-access
+class Provider(_BackgroundServer):
     """Background server which can provide a set of resources."""
 
     _resources: MutableMapping[str, Resource]
