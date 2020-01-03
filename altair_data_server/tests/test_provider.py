@@ -62,7 +62,7 @@ def test_content_default_url(provider: Provider) -> None:
 
 @pytest.mark.parametrize("route", ["/content", "hello_world.txt", ""])
 def test_content_route(provider: Provider, http_client: HTTPClient, route: str) -> None:
-    content = "testing route {!r}".format(route)
+    content = f"testing route {route!r}"
     resource = provider.create(content=content, route=route)
     assert resource.url.split("/")[-1] == route.lstrip("/")
     assert http_client.fetch(resource.url).body == content.encode()

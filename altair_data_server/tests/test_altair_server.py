@@ -30,7 +30,7 @@ def _decode_proxied_url(url: str, fmt: str) -> str:
     assert match.group(3) == fmt
 
     # proxy only works when running under jupyter, use direct access here
-    return "http://localhost:{}/{}".format(match.group(1), match.group(2))
+    return f"http://localhost:{match.group(1)}/{match.group(2)}"
 
 
 @pytest.mark.parametrize(
