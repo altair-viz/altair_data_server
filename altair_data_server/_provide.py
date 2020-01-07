@@ -155,8 +155,7 @@ class ResourceHandler(tornado.web.RequestHandler):
         path = self.request.path
         resource = self.resources.get(path.lstrip("/"))
         if not resource:
-            self.set_status(404)
-            return
+            raise tornado.web.HTTPError(404)
         content_type, _ = mimetypes.guess_type(path)
         if content_type:
             self.set_header("Content-Type", content_type)
