@@ -56,13 +56,18 @@ class AltairDataServer:
 
 class AltairDataServerProxied(AltairDataServer):
     def __call__(
-        self, data: pd.DataFrame, fmt: str = "json", port: Optional[int] = None
+        self,
+        data: pd.DataFrame,
+        fmt: str = "json",
+        port: Optional[int] = None,
+        urlpath: str = "..",
     ) -> Dict[str, str]:
         result = super().__call__(data, fmt=fmt, port=port)
 
         url_parts = parse.urlparse(result["url"])
+        urlpath = urlpath.rstrip("/")
         # vega defaults to <base>/files, redirect it to <base>/proxy/<port>/<file>
-        result["url"] = f"../proxy/{url_parts.port}{url_parts.path}"
+        result["url"] = f"{urlpath}/proxy/{url_parts.port}{url_parts.path}"
 
         return result
 
