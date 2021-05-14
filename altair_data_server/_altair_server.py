@@ -1,4 +1,5 @@
 """Altair data server."""
+import os
 
 from typing import Dict, Optional, Tuple
 from urllib import parse
@@ -55,17 +56,42 @@ class AltairDataServer:
 
 
 class AltairDataServerProxied(AltairDataServer):
+    """
+    Backend server adaptor for use with JupyterHub.
+
+    JupyterHub sets a JUPYTERHUB_SERVICE_PREFIX environment variable with
+    the base URL of the currently running user server. This takes into account
+    various factors, such as the base URL of the JupyterHub itself, named
+    servers (if the user has multiple servers running), etc. Binder also
+    sets the same environment variable, since it uses JupyterHub behind the
+    scenes.
+
+    jupyter-server-proxy proxies arbitrary HTTP requests sent to
+    $JUPYTERHUB_SERVICE_PREFIX/proxy/<port><path> to localhost:<port><path>
+    on the server.
+
+    This transformer assumes you are running on a JupyterHub (or Binder),
+    and constructs the appropriate URL for vega to reach the altair server.
+
+    You can optionally pass in `urlpath` to override the default.
+    """
     def __call__(
         self,
         data: pd.DataFrame,
         fmt: str = "json",
         port: Optional[int] = None,
-        urlpath: str = "..",
+        urlpath: Optional[str] = None,
     ) -> Dict[str, str]:
         result = super().__call__(data, fmt=fmt, port=port)
 
         url_parts = parse.urlparse(result["url"])
+        if urlpath is None:
+            if 'JUPYTERHUB_SERVICE_PREFIX' not in os.environ:
+                raise ValueError('Not running in a JupyterHub, urlpath must be explicitly set')
+            urlpath = os.environ['JUPYTERHUB_SERVICE_PREFIX']
+
         urlpath = urlpath.rstrip("/")
+
         # vega defaults to <base>/files, redirect it to <base>/proxy/<port>/<file>
         result["url"] = f"{urlpath}/proxy/{url_parts.port}{url_parts.path}"
 
