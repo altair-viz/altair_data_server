@@ -14,7 +14,21 @@ import pandas as pd
 
 
 class AltairDataServer:
-    """Backend server for Altair datasets."""
+    """
+    Backend server for Altair datasets.
+
+    Serves datasets over HTTP dynamically so they do not need to be embedded
+    in the notebook.
+
+    By default, it starts a background server listening on an arbitrary port,
+    and transforms the URLs vega uses for the datasets to fetch from the
+    server. This works when the background server, the jupyter notebook and
+    the user are all on the same machine - the user's local installation.
+
+    On remote installations (like JupyterHub or Binder), the background
+    server can't be directly reached by vega. Instead, the jupyter-server-proxy
+    package is used to proxy user requests to the background server.
+    """
 
     def __init__(self) -> None:
         self._provider: Optional[Provider] = None
@@ -39,7 +53,7 @@ class AltairDataServer:
         return content, _compute_data_hash(content)
 
     def __call__(
-        self, data: pd.DataFrame, fmt: str = "json", port: Optional[int] = None
+        self, data: pd.DataFrame, fmt: str = "json", port: Optional[int] = None, urlprefix: Optional[str] = None
     ) -> Dict[str, str]:
         if self._provider is None:
             self._provider = Provider().start(port=port)
@@ -52,28 +66,41 @@ class AltairDataServer:
                 extension=fmt,
                 headers={"Access-Control-Allow-Origin": "*"},
             )
-        return {"url": self._resources[resource_id].url}
+
+        url = self._resources[resource_id].url
+
+
+        # JupyterHub sets a JUPYTERHUB_SERVICE_PREFIX environment variable with
+        # the base URL of the currently running user server. This takes into account
+        # various factors, such as the base URL of the JupyterHub itself, named
+        # servers (if the user has multiple servers running), etc. Binder also
+        # sets the same environment variable, since it uses JupyterHub behind the
+        # scenes.
+
+        # jupyter-server-proxy proxies arbitrary HTTP requests sent to
+        # $JUPYTERHUB_SERVICE_PREFIX/proxy/<port><path> to localhost:<port><path>
+        # on the server.
+        if urlprefix is None:
+            if 'JUPYTERHUB_SERVICE_PREFIX' in os.environ:
+                urlprefix = os.environ['JUPYTERHUB_SERVICE_PREFIX']
+
+        if urlprefix is not None:
+            url_parts = parse.urlparse(url)
+
+            urlprefix = urlprefix.rstrip("/")
+
+            # vega defaults to <base>/files, redirect it to <base>/proxy/<port>/<file>
+            url = f'{urlprefix}/proxy/{url_parts.port}{url_parts.path}'
+
+
+        return {"url": url}
 
 
 class AltairDataServerProxied(AltairDataServer):
     """
-    Backend server adaptor for use with JupyterHub.
+    Backend server for use with JupyterHub & Binder
 
-    JupyterHub sets a JUPYTERHUB_SERVICE_PREFIX environment variable with
-    the base URL of the currently running user server. This takes into account
-    various factors, such as the base URL of the JupyterHub itself, named
-    servers (if the user has multiple servers running), etc. Binder also
-    sets the same environment variable, since it uses JupyterHub behind the
-    scenes.
-
-    jupyter-server-proxy proxies arbitrary HTTP requests sent to
-    $JUPYTERHUB_SERVICE_PREFIX/proxy/<port><path> to localhost:<port><path>
-    on the server.
-
-    This transformer assumes you are running on a JupyterHub (or Binder),
-    and constructs the appropriate URL for vega to reach the altair server.
-
-    You can optionally pass in `urlpath` to override the default.
+    Deprecated.
     """
     def __call__(
         self,
@@ -82,20 +109,7 @@ class AltairDataServerProxied(AltairDataServer):
         port: Optional[int] = None,
         urlpath: Optional[str] = None,
     ) -> Dict[str, str]:
-        result = super().__call__(data, fmt=fmt, port=port)
-
-        url_parts = parse.urlparse(result["url"])
-        if urlpath is None:
-            if 'JUPYTERHUB_SERVICE_PREFIX' not in os.environ:
-                raise ValueError('Not running in a JupyterHub, urlpath must be explicitly set')
-            urlpath = os.environ['JUPYTERHUB_SERVICE_PREFIX']
-
-        urlpath = urlpath.rstrip("/")
-
-        # vega defaults to <base>/files, redirect it to <base>/proxy/<port>/<file>
-        result["url"] = f"{urlpath}/proxy/{url_parts.port}{url_parts.path}"
-
-        return result
+        return super().__call__(data, fmt=fmt, port=port, urlprefix=urlpath)
 
 
 # Singleton instances

@@ -47,10 +47,10 @@ and carry on from there.
 Remotely-hosted notebooks (like JupyterHub or Binder) usually do not allow the end
 user to access arbitrary ports. To enable users to work on that setup, make sure
 [jupyter-server-proxy](https://github.com/jupyterhub/jupyter-server-proxy) is
-installed on the jupyter server, and use the proxied data server transformer:
+installed on the jupyter server, and use the data server transformer as usual:
 
 ```python
-alt.data_transformers.enable('data_server_proxied')
+alt.data_transformers.enable('data_server')
 ```
 
 ## Example
