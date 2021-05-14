@@ -47,37 +47,11 @@ and carry on from there.
 Remotely-hosted notebooks (like JupyterHub or Binder) usually do not allow the end
 user to access arbitrary ports. To enable users to work on that setup, make sure
 [jupyter-server-proxy](https://github.com/jupyterhub/jupyter-server-proxy) is
-installed on the jupyter server, and use the proxied data server transformer:
+installed on the jupyter server, and use the data server transformer as usual:
 
 ```python
-alt.data_transformers.enable('data_server_proxied')
+alt.data_transformers.enable('data_server')
 ```
-
-The `urlpath` parameter allows you to override the prefix of the proxy URL. By
-default, it's set to `..`, which is currently the only way to make it work for
-arbitrary users when running inside the classic notebook on Binder. If you
-intend your notebooks to be run on Binder but inside JupyterLab, change it to
-`.` instead, which will work provided JupyterLab is in the [default
-workspace](https://jupyterlab.readthedocs.io/en/stable/user/urls.html#managing-workspaces-ui).
-
-```python
-# for notebooks intended for JupyterLab on Binder
-alt.data_transformers.enable('data_server_proxied', urlpath='.')
-```
-
-On a custom JupyterHub instance, a much more robust option is to take advantage
-of JupyterHub's [`/user-redirect`](https://jupyterhub.readthedocs.io/en/stable/reference/urls.html#user-redirect)
-feature (which is not available on Binder):
-
-```python
-# this will work for any JupyterHub user, whether they're using the classic
-# notebook, JupyterLab in the default workspace, or JupyterLab in a named
-# workspace
-alt.data_transformers.enable('data_server_proxied', urlpath='/user-redirect')
-```
-
-If your JupyterHub lives somewhere else than at your server's root, add the
-appropriate prefix to `urlpath`.
 
 ## Example
 
