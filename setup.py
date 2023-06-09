@@ -83,6 +83,10 @@ setup(
             "data_server=altair_data_server:data_server",
             "data_server_proxied=altair_data_server:data_server_proxied",
         ],
+        "altair.vegalite.v5.data_transformer": [
+            "data_server=altair_data_server:data_server",
+            "data_server_proxied=altair_data_server:data_server_proxied",
+        ],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
